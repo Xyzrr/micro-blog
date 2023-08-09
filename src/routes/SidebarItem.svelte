@@ -1,0 +1,11 @@
+<script lang="ts">
+    import { page } from '$app/stores';
+    import classNames from 'classnames';
+
+	export let to: string;
+    $: activeUrl = $page.url.pathname;
+
+    console.log("TO", to);
+</script>
+
+<a href={to} class={classNames("py-1 px-4 opacity-60 hover:opacity-100 text-sm", {"opacity-100": activeUrl === to})}><slot/></a>
