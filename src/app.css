@@ -34,3 +34,14 @@ ol {
 ol ol {
 	list-style-type: lower-alpha;
 }
+
+.main a {
+	text-decoration: underline;
+	opacity: 0.7;
+	text-decoration-color: rgba(64, 62, 67, 0.4);
+}
+
+.main a:hover {
+	opacity: 1;
+	text-decoration-color: rgba(64, 62, 67, 1);
+}
