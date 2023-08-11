@@ -23,13 +23,13 @@
 	like by sticking electrodes into their brains?
 </p>
 <p>
-	Regardless, I think existential risk will come long before AI is smart enough to go rogue, due to
-	malignant humans using AI. We’ve already had close calls with nuclear weapons and synthetic
-	viruses. I think the reason those weapons haven’t ended the world yet is because they’re hard to
-	use tactically—it’s hard to get them to accomplish what a group of powerful people actually want.
-	Not many people want a city reduced to rubble, and we can’t control what a virus is going to
-	mutate into as it spreads. AI is considerably more useful. You can use it to manipulate and
-	subjugate precisely the subset of society you want to target.
+	Regardless, I think existential risk will come long before AI is smart enough to unalign itself
+	with its developers, because some developers will be unaligned. We’ve already had close calls with
+	nuclear weapons and synthetic viruses. I think the reason those weapons haven’t ended the world
+	yet is because they’re hard to use tactically—it’s hard to get them to accomplish what a group of
+	powerful people actually want. Not many people want a city reduced to rubble, and we can’t control
+	what a virus is going to mutate into as it spreads. AI is considerably more useful. You can use it
+	to manipulate and subjugate precisely the subset of society you want to target.
 </p>
 <p>
 	There will almost certainly be more good people using AI than bad people using AI, so they’ll be
