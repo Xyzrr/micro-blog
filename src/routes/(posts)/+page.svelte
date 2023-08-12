@@ -8,3 +8,11 @@
 		href="mailto:johnlongqian+blog@gmail.com">johnlongqian+blog@gmail.com</a
 	>
 </p>
+<div class="flex gap-2 items-center mt-8">
+	<a target="_blank" rel="noreferrer" href="https://twitter.com/johnlqian">
+		<img alt="twitter profile" src="twitter.svg" class="h-4 hover:brightness-110" />
+	</a>
+	<a target="_blank" rel="noreferrer" href="https://github.com/Xyzrr/micro-blog">
+		<img alt="github profile" src="github.svg" class="h-5 rounded-full hover:opacity-90" />
+	</a>
+</div>
