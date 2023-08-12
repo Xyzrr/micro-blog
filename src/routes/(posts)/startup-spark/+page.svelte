@@ -164,8 +164,8 @@
 </p>
 <p>
 	Beyond that, your best bet is to hire less. I strongly believe most companies hire too fast due to
-	maligned manager incentives, uninformed investors pushing you to look more like other fast-growing
-	startups, and not understanding the true cost of a head. And as tools (especially AI) get better,
-	the number of users a small team can support increases. Founders of the future may not need to
-	worry so much about these scaling pains, and work may become fun for everyone.
+	misaligned manager incentives, uninformed investors pushing you to look more like other
+	fast-growing startups, and not understanding the true cost of a head. And as tools (especially AI)
+	get better, the number of users a small team can support increases. Founders of the future may not
+	need to worry so much about these scaling pains, and work may become fun for everyone.
 </p>
