@@ -54,14 +54,14 @@
 				If not too many users, can tolerate downtime to make breaking backend/database changes
 				quickly.
 			</li>
-			<li>
-				Anything is possible! Maybe this will make your equity worth something. Maybe people will be
-				building upon this feature for years to come, maybe you’ll be seen as a visionary in the
-				history books. Maybe you’ll attend a party with your users and hear them say “you came up
-				with this idea? OMG it saved my life”. Because everyone in the team has skin in the game,
-				they’re all rooting for you. Your hearts are synced.
-			</li>
 		</ol>
+	</li>
+	<li>
+		Anything is possible! Maybe this will make your equity worth something. Maybe people will be
+		building upon this feature for years to come, maybe you’ll be seen as a visionary in the history
+		books. Maybe you’ll attend a party with your users and hear them say “you came up with this
+		idea? OMG it saved my life”. Because everyone in the team has skin in the game, they’re all
+		rooting for you. Your hearts are synced.
 	</li>
 </ol>
 <p>
