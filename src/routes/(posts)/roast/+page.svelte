@@ -1,8 +1,8 @@
 <h1>We don't roast anymore</h1>
 <div class="opacity-60 mb-8">July 2021</div>
 <p>
-	In high school, kids were brutally honest. Whenever I did something foolish, other kids would make
-	sure I knew. Taken to the extreme, this becomes bullying. But I think the level of criticism I
+	In my high school, kids were brutally honest. Whenever I did something foolish, other kids would
+	make sure I knew. Taken too far, this becomes bullying. But I think the level of criticism I
 	received in high school was net beneficial for me. Not all of the feedback was worth following,
 	but it was always useful to know what people honestly thought.
 </p>
@@ -29,10 +29,10 @@
 	So if you want to keep improving like you did in high school, what can you do about this? I think
 	it&#39;s a hard problem. Explicitly asking your friends for feedback may help, but not
 	necessarily. I once overheard an executive say, &quot;when someone asks me for honest criticism, I
-	almost never actually give it to them. Unless they&#39;re my employee, there&#39;s just no value
-	in it for me.&quot; So is the solution to ask your manager for feedback? Probably not; it&#39;s
-	never worked for me. As long as you do your job fine, your manager doesn&#39;t have much incentive
-	to give you criticism either.
+	never actually give it to them. Unless they work for me, there&#39;s just no value in it for
+	me.&quot; So does this mean the solution is to ask your manager for feedback? Probably not;
+	it&#39;s never worked for me. As long as you do your job fine, your manager doesn&#39;t have much
+	incentive to give you criticism either.
 </p>
 <p>I can think of only two partial solutions.</p>
 <p>
@@ -51,10 +51,11 @@
 	aware of the problem, you can avoid calcifying too early.
 </p>
 <p class="pt-16">
-	[1] I originally thought that it’s because it takes time to realize that fixing people isn’t worth
-	it. I no longer think this is the reason; in high school, fixing people often is worth it. Kids
-	are quick at learning what behaviors work; what takes time is unlearning behaviors that have
-	stopped working.
+	[1] I originally thought the main reason is that high school students hadn't yet realized it's not
+	worth it to fix people. I no longer think this is the reason; in high school, fixing people often <em
+		>is</em
+	> worth it. Kids are quick at learning what behaviors work; what takes time is unlearning behaviors
+	that have stopped working.
 </p>
 <p>
 	[2] A surprising implication of this is that giving someone criticism is a powerful statement of
