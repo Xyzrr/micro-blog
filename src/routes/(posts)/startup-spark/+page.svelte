@@ -1,6 +1,6 @@
 <h1>How a startup loses its spark</h1>
 <div class="opacity-60 mb-8">
-	August 2023 - <em
+	August 2023 • <em
 		><a
 			href="https://news.ycombinator.com/item?id=37098483"
 			class="opacity-100"
