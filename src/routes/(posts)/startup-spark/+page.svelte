@@ -1,5 +1,14 @@
 <h1>How a startup loses its spark</h1>
-<div class="opacity-60 mb-8">August 2023</div>
+<div class="opacity-60 mb-8">
+	August 2023 - <em
+		><a
+			href="https://news.ycombinator.com/item?id=37098483"
+			class="opacity-100"
+			target="_blank"
+			rel="noreferrer">discussion on Hacker News</a
+		></em
+	>
+</div>
 <p>
 	At a well-run seed stage startup, engineers will often describe the work experience as <em
 		>intoxicating</em
