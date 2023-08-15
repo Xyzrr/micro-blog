@@ -200,8 +200,8 @@
 </blockquote>
 <p>
 	Given how frequently this sentiment appears on HN threads, it’s probably true in most cases. But
-	it’s certainly not true of all cases. If you’re capable of and willing to be obsessed with work,
-	it’s worth finding an environment that rewards your obsession. I’ve generally found my hard work
+	it’s certainly not true of all cases. If you’re able and willing to be obsessed with work, it’s
+	worth finding an environment that rewards your obsession. I’ve generally found my hard work
 	rewarded amply at small companies. Don't forget to negotiate.
 </p>
 
