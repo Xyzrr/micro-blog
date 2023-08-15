@@ -222,10 +222,10 @@
 	>
 </blockquote>
 <p>
-	What I mean is that if you let engineers work on whatever they want, communication is O(N^2). In
-	practice you have management hierarchies, which reduces communication to be closer to O(N*log(N)).
-	But the management hierarchies prevent engineers from working on whatever they want, hence less
-	fun.
+	What I mean is that if you let engineers work on whatever they want and manage their own
+	conflicts, communication is O(N^2). In practice you have management hierarchies, which reduces
+	communication to be closer to O(N*log(N)). But the management hierarchies prevent engineers from
+	working on whatever they want, hence less fun.
 </p>
 
 <blockquote>
