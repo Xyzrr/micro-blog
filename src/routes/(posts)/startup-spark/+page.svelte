@@ -178,3 +178,62 @@
 	get better, the number of users a small team can support increases. Founders of the future may not
 	need to worry so much about these scaling pains, and work may become fun for everyone.
 </p>
+
+<h2 class="mt-24">Addressing some comments</h2>
+
+<p>
+	This essay provoked a lot of conversation on <a
+		target="_blank"
+		rel="noreferrer"
+		href="https://news.ycombinator.com/item?id=37098483">Hacker News</a
+	>! To preserve the integrity of the thread (and also this generous
+	<a target="_blank" rel="noreferrer" href="https://yakst.com/ja/posts/5797">Japanese translation</a
+	> by Hayato Matsuura), I won't be modifying the essay, though some things could have been clearer.
+	Some friends have asked me for my thoughts on the top dissenting comments, so here they are (quotes
+	heavily paraphrased for concision):
+</p>
+
+<blockquote>
+	<a href="https://news.ycombinator.com/item?id=37103863" target="_blank" rel="noreferrer"
+		>“If work intoxicates you, you’re being exploited.”</a
+	>
+</blockquote>
+<p>
+	Given how frequently this sentiment appears on HN threads, it’s probably true in most cases. But
+	it’s certainly not true of all cases. If you’re capable of and willing to be obsessed with work,
+	it’s worth finding an environment that rewards your obsession. I’ve generally found my hard work
+	rewarded amply at small companies. Don't forget to negotiate.
+</p>
+
+<blockquote>
+	<a href="https://news.ycombinator.com/item?id=37099725" target="_blank" rel="noreferrer"
+		>“I work at a large company, and it’s intoxicating.”</a
+	>
+</blockquote>
+<p>
+	This is great to hear, and I concede my thesis is more absolutist than reality is. I do believe
+	that amazing managers can do wonders for team alignment, and I plan on writing about this. But I
+	think the problems stated still exist.
+</p>
+
+<blockquote>
+	<a href="https://news.ycombinator.com/item?id=37099725" target="_blank" rel="noreferrer"
+		>"Communication is not really O(N^2).”</a
+	>
+</blockquote>
+<p>
+	What I mean is that if you let engineers work on whatever they want, communication is O(N^2). In
+	practice you have management hierarchies, which reduces communication to be closer to O(N*log(N)).
+	But the management hierarchies prevent engineers from working on whatever they want, hence less
+	fun.
+</p>
+
+<blockquote>
+	<a href="https://news.ycombinator.com/item?id=37100577" target="_blank" rel="noreferrer"
+		>“What should startups use instead of Jira?”</a
+	>
+</blockquote>
+<p>
+	Linear. To be fair I don’t have data on how well Linear scales, but it’s hard to imagine it ever
+	being a worse experience than Jira.
+</p>
