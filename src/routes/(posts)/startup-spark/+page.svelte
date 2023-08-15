@@ -213,7 +213,7 @@
 <p>
 	This is great to hear, and I concede my thesis is more absolutist than reality is. I do believe
 	that amazing managers can do wonders for team alignment, and I plan on writing about this. But I
-	think the problems stated still exist.
+	think the fundamental problems stated exist regardless.
 </p>
 
 <blockquote>
