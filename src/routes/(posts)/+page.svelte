@@ -93,3 +93,6 @@
 		</button>
 	{/if}
 </form>
+{#if done}
+	<p class="mt-2 text-sm text-gray-500">Thank you!</p>
+{/if}
