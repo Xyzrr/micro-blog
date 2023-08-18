@@ -21,6 +21,7 @@
 </script>
 
 <svelte:head>
+	<title>John Qian's blog</title>
 	<meta
 		name="description"
 		content="The blog of John Qian. I'm tacking my name onto my site metadata to bump my SEO for my name."
