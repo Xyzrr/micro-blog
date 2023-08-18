@@ -1,3 +1,6 @@
+<svelte:head>
+	<title>We don't roast anymore</title>
+</svelte:head>
 <h1>We don't roast anymore</h1>
 <div class="opacity-60 mb-8">July 2021</div>
 <p>

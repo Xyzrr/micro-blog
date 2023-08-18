@@ -1,3 +1,6 @@
+<svelte:head>
+	<title>How a startup loses its spark</title>
+</svelte:head>
 <h1>How a startup loses its spark</h1>
 <div class="opacity-60 mb-8">
 	August 2023 • <em

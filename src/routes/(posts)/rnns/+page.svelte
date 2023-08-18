@@ -1,3 +1,6 @@
+<svelte:head>
+	<title>Why RNNs work</title>
+</svelte:head>
 <h1>Why RNNs work</h1>
 <div class="opacity-60 mb-8">January 2023</div>
 <p>

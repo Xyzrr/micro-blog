@@ -1,3 +1,6 @@
+<svelte:head>
+	<title>My take on AI safety</title>
+</svelte:head>
 <h1>My take on AI safety</h1>
 <div class="opacity-60 mb-8">February 2023</div>
 <p>

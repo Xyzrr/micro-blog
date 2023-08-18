@@ -20,6 +20,12 @@
 	};
 </script>
 
+<svelte:head>
+	<meta
+		name="description"
+		content="The blog of John Qian. I'm tacking my name onto my site metadata to bump my SEO for my name."
+	/>
+</svelte:head>
 <h1>Welcome!</h1>
 <p>
 	Thanks for visiting my blog. I'm currently an engineer at Adept. My thoughts don't reflect my
