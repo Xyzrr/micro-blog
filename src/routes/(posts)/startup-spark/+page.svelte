@@ -226,9 +226,9 @@
 </blockquote>
 <p>
 	What I mean is that if you let engineers work on whatever they want and manage their own
-	conflicts, communication is O(N^2). In practice you have management hierarchies, which reduces
-	communication to be closer to O(N*log(N)). But the management hierarchies prevent engineers from
-	working on whatever they want, hence less fun.
+	conflicts, communication is O(N^2). In practice you solve this with a management hierarchy, which
+	reduces communication to be closer to O(N*log(N)). But the management hierarchy prevents engineers
+	from working on whatever they want, hence less fun.
 </p>
 
 <blockquote>
