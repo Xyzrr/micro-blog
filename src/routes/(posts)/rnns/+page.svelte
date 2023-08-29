@@ -4,18 +4,18 @@
 <h1>Why RNNs work</h1>
 <div class="opacity-60 mb-8">January 2023</div>
 <p>
-	Most RNN explainers, even the <a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/"
-		>best</a
-	>, state that recurrent neural nets (RNNs) exist because feedforward neural nets (FNNs) are
-	constrained to fixed-size I/O, making them unable to handle sequences. However, this explanation
-	is misleading. FNNs can handle sequences via the sliding window algorithm: take the N most recent
-	tokens as input, output the next token. That is in fact exactly what Transformers do, though
-	they’re seldom described that way.
+	Most recurrent neural net (RNN) explainers, even the <a
+		href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">best</a
+	>, state that RNNs exist because feedforward neural nets (FNNs) are constrained to fixed-size I/O,
+	making them unable to handle sequences. However, this explanation is misleading. FNNs can handle
+	sequences via the sliding window algorithm: take the N most recent tokens as input, output the
+	next token. That is in fact exactly what Transformers do, though they’re seldom described that
+	way.
 </p>
 <p>
 	So if FNNs handle sequences just fine, why were RNNs invented? The reason is simply that before
-	Transformers, RNNs handled sequences much better any FNN we had. The intuition lies in how
-	awkwardly formed existing FNNs were for the job.
+	Transformers, RNNs handled sequences much better any FNN we had. I believe the intuition lies in
+	how awkwardly formed existing FNNs were for the job.
 </p>
 <p>
 	Consider how you would hand-write an autocompleter function that finishes your sentence. No matter
