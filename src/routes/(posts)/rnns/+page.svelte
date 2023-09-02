@@ -81,10 +81,10 @@ return generate_next_token(intermediate_0, intermediate_1, ...)</code
 </p>
 <h2 id="sequence-to-sequence">Sequence to sequence</h2>
 <p>
-	You can technically frame a sequence-to-sequence problem, like language translation, as a
+	You can technically frame any sequence-to-sequence problem, like language translation, as a
 	continue-the-sequence problem and solve it the same way as anything else. You could have a special
 	input token that means “from here on out should be the Chinese translation", and when the model
-	sees that mentioned in its notes, it’ll remember to switch to Chinese mode. But this probably
+	sees that mentioned in its notes, it’ll remember to use its Chinese mode. But this probably
 	doesn’t work very well with RNNs, given that no one’s ever published a paper on it.
 </p>
 <p>
