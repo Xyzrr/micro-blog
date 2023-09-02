@@ -17,13 +17,14 @@
 <p>
 	Researchers are primarily concerned with existential risk. The framing I've seen most often is
 	that it may be impossible to align superintelligence, so whatever goal it ends up with will likely
-	involve killing us as a subgoal due to [instrumental
-	convergence](https://en.wikipedia.org/wiki/Instrumental_convergence). While this seems plausible
-	to me, I haven’t found an argument for it that I understood. It seems to me that if you took a
-	good, empathetic human and made them a billion times more intelligent, they would still avoid
-	hurting humans. After all, we're able to feel abundant empathy towards the mentally disabled; we
-	don't kill them when they get in the way of our goals. It’s unclear to me why a superintelligent
-	AI trained by humans will have different values than a superintelligent human.
+	involve killing us as a subgoal due to <a
+		href="https://en.wikipedia.org/wiki/Instrumental_convergence">instrumental convergence</a
+	>. While this seems plausible to me, I haven’t found an argument for it that I understood. It
+	seems to me that if you took a good, empathetic human and made them a billion times more
+	intelligent, they would still avoid hurting humans. After all, we're able to feel abundant empathy
+	towards the mentally disabled; we don't kill them when they get in the way of our goals. It’s
+	unclear to me why a superintelligent AI trained by humans will have different values than a
+	superintelligent human.
 </p>
 <p>
 	Regardless, I think existential risk will come long before AI is smart enough to unalign itself
