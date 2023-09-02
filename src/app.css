@@ -55,3 +55,16 @@ blockquote {
 	opacity: 1;
 	text-decoration-color: rgba(64, 62, 67, 1);
 }
+
+code {
+	font-family: Inconsolata;
+	border: 1px solid #ddd;
+	background-color: #eee;
+	border-radius: 4px;
+}
+
+pre > code {
+	display: block;
+	overflow-x: auto;
+	padding: 4px;
+}
