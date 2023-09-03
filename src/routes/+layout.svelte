@@ -5,15 +5,16 @@
 	import { onMount } from 'svelte';
 
 	onMount(async () => {
-		if (window.location.hash) {
+		if (window.location.search) {
 			const fp = await FingerprintJS.load({ monitoring: false });
 			const result = await fp.get();
 			const fingerprint = result.visitorId;
 
-			const docRef = await addDoc(collection(db, 'hashedVisits'), {
+			const docRef = await addDoc(collection(db, 'trackedVisits'), {
 				createdAt: new Date(),
 				url: window.location.href,
 				hash: window.location.hash,
+				search: window.location.search,
 				fingerprint
 			});
 		}
