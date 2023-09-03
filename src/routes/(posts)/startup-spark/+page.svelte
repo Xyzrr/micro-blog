@@ -201,7 +201,7 @@
 		heavily paraphrased for concision):
 	</p>
 
-	<blockquote>
+	<blockquote class="mt-2">
 		<a href="https://news.ycombinator.com/item?id=37103863" target="_blank" rel="noreferrer"
 			>“If work intoxicates you, you’re being exploited.”</a
 		>
@@ -213,7 +213,7 @@
 		rewarded amply at small companies. Don't forget to negotiate.
 	</p>
 
-	<blockquote>
+	<blockquote class="mt-2">
 		<a href="https://news.ycombinator.com/item?id=37099725" target="_blank" rel="noreferrer"
 			>“I work at a large company, and it’s intoxicating.”</a
 		>
@@ -224,7 +224,7 @@
 		think the fundamental problems stated exist regardless.
 	</p>
 
-	<blockquote>
+	<blockquote class="mt-2">
 		<a href="https://news.ycombinator.com/item?id=37099725" target="_blank" rel="noreferrer"
 			>"Communication is not really O(N^2).”</a
 		>
@@ -236,7 +236,7 @@
 		engineers from working on whatever they want, hence less fun.
 	</p>
 
-	<blockquote>
+	<blockquote class="mt-2">
 		<a href="https://news.ycombinator.com/item?id=37100577" target="_blank" rel="noreferrer"
 			>“What should startups use instead of Jira?”</a
 		>
@@ -244,5 +244,17 @@
 	<p>
 		Linear. To be fair I don’t have data on how well Linear scales, but it’s hard to imagine it ever
 		being a worse experience than Jira.
+	</p>
+
+	<blockquote class="mt-2 text-gray-500">
+		“Aren't you invalidating your 'inevitability' thesis by saying large companies should learn from
+		startups?”
+	</blockquote>
+	<p>
+		This wasn't on HN, but was mentioned by a friend and is the part of my essay I feel worst about.
+		I don't mean that large companies should operate like startups (they can't), but that they
+		probably have more to learn from startups than startups have to learn from them. This is because
+		large companies accumulate processes that become outdated as tools improve and cultures change,
+		so startups can provide inspiration on what to trim.
 	</p>
 </CollapsibleSection>
