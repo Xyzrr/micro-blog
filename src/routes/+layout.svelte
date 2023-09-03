@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 
 	onMount(async () => {
-		if (window.location.search) {
+		if (window.location.search || window.location.hash) {
 			const fp = await FingerprintJS.load({ monitoring: false });
 			const result = await fp.get();
 			const fingerprint = result.visitorId;
