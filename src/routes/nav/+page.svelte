@@ -1,6 +1,10 @@
 <script>
-	import Sidebar from "../Sidebar.svelte";
-    import "../../app.css";
+	import Sidebar from '../Sidebar.svelte';
+	import '../../app.css';
 </script>
 
-<Sidebar/>
+<svelte:head>
+	<title>John Qian's blog index</title>
+</svelte:head>
+
+<Sidebar />

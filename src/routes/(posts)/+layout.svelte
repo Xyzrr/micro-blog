@@ -4,7 +4,6 @@
 </script>
 
 <svelte:head>
-	<title>John Qian's blog</title>
 	<meta name="keywords" content="john, qian, john qian, blog, software engineer, tech, AI" />
 </svelte:head>
 <div class="flex flex-col sm:flex-row">
