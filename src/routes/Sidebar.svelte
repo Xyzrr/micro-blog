@@ -13,15 +13,3 @@
 		<SidebarItem to="/sf-paradox">SF's paradox</SidebarItem>
 	</div>
 </div>
-
-<style>
-	a {
-		padding: 4px 16px;
-		opacity: 60%;
-		font-size: 14px;
-		text-decoration: none;
-	}
-	a:hover {
-		opacity: 100%;
-	}
-</style>
