@@ -185,8 +185,8 @@
 	get better, the number of users a small team can support increases. Founders of the future may not
 	need to worry so much about these scaling pains, and work may become fun for everyone.
 </p>
-
-<div class="mb-16" />
+<hr class="mt-8" />
+<div class="mb-24" />
 <CollapsibleSection title="Addressing some comments">
 	<p>
 		This essay provoked a lot of conversation on <a
