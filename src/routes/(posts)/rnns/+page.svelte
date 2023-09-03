@@ -89,10 +89,10 @@ return generate_next_token(intermediate_0, intermediate_1, ...)</code
 </p>
 <p>
 	Some intuition on why that might be: it feels a little wasteful to use the same set of weights for
-	processing the English and for writing the Chinese. Your model would be twice as big and only use
-	half its abilities at any moment. So what you can do is have two different RNNs, an encoder for
-	comprehending the input, and decoder for synthesizing the output. When the encoder finishes
-	reading the input, it simply hands its note off to the decoder.
+	both processing the English and writing the Chinese. Your model would only use half its abilities
+	at any moment. So you might instead want two different RNNs: an encoder for comprehending the
+	input, and decoder for synthesizing the output. When the encoder finishes reading the input, it
+	simply hands its note off to the decoder.
 </p>
 <p>
 	This has the added benefit of modularity; you can to swap out the decoder while reusing the
