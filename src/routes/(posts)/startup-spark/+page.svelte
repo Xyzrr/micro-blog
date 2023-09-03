@@ -252,9 +252,9 @@
 	</blockquote>
 	<p>
 		This wasn't on HN, but was mentioned by a friend and is the part of my essay I feel worst about.
-		I don't mean that large companies should operate like startups (they can't), but that they
-		probably have more to learn from startups than startups have to learn from them. This is because
-		large companies accumulate processes that become outdated as tools improve and cultures change,
-		so startups can provide inspiration on what to trim.
+		I didn't mean to say that large companies should operate like startups (they can't), but that
+		they probably have more to learn from startups than startups have to learn from them. This is
+		because large companies accumulate processes that become outdated as tools improve and cultures
+		change, so startups can provide inspiration on what to trim.
 	</p>
 </CollapsibleSection>
