@@ -18,9 +18,8 @@
 	point in the solution space, so it's statistically unlikely to be the simplest. Simplification
 	requires you to keep searching, with each reduction taking exponentially longer, because there's
 	exponentially fewer simple solutions than there are complex ones. Situations where this hard work
-	is incentivized are scarce. Often you just need a working solution and complexity doesn't matter.
-	And too often there's an incentive to <em>increase</em> complexity--to obfuscate. The four main reasons
-	are:
+	is incentivized are scarce. Often you just need a working solution, simplicity be damned. And too
+	often there's an incentive to <em>increase</em> complexity--to obfuscate. The four main reasons are:
 </p>
 <ol>
 	<li>
@@ -48,7 +47,7 @@
 			is the very reason for their offensiveness. Verbosity is a core tenet of politeness; it shows
 			you put in effort. When you make a topic seem simple, it can offend those who spent years
 			studying the topic. Other times, simple explanations are offensive because they’re more true
-			than the standard narrative. Truth tends to be simpler than fiction because logical
+			than the standard narratives. Truth tends to be simpler than fiction because logical
 			consistency is built-in, and fictions often exist to mask offensive truths. Many social
 			phenomena can be explained more simply, but elaborating this point on the public internet
 			would not be worth it for me.
