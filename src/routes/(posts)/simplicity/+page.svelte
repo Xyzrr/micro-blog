@@ -4,18 +4,23 @@
 <h1>Simplicity scarcity</h1>
 <div class="opacity-60 mb-8">Janurary 2023</div>
 <p>
-	One of the most important, least understood truths is that simpler solutions are exponentially
-	harder to conceive. They require more mental computation now in exchange for less computation
-	later. When something is complex, it’s often because it wasn’t important enough to simplify.
+	Most people find complex things (products, thought pieces, etc.) more impressive than simple
+	things. Much of academic writing rides on this premise. In tech, it can slow adoption of new
+	products. Anything sleeker than Salesforce must not be as powerful, right?
 </p>
 <p>
-	A reason this is so misunderstood is that when you look around, smarter people have more complex
-	ideas. But this is because smarter people work on harder problems. When you stratify problem space
-	by difficulty, smarter people have simpler ideas.
+	The complexity bias exists because when you look around, smarter people have more complex ideas.
+	But that's because smarter people work on harder problems. When you stratify problem space by
+	difficulty, smarter people have simpler ideas.
 </p>
 <p>
-	Yet just because smarter people have simpler ideas doesn’t mean they present them that way. Often
-	there’s an incentive to obfuscate your idea with complexity. The four main reasons are:
+	Given a problem, the first solution you find generally has excess complexity. It's a semi-random
+	point in the solution space, so it's statistically unlikely to be the simplest. Simplification
+	requires you to keep searching, with each reduction taking exponentially longer, because there's
+	exponentially fewer simple solutions than there are complex ones. Situations where this hard work
+	is incentivized are scarce. Often you just need a working solution and complexity doesn't matter.
+	And too often there's an incentive to <em>increase</em> complexity--to obfuscate. The four main reasons
+	are:
 </p>
 <ol>
 	<li>
@@ -30,9 +35,11 @@
 		<p>
 			To create a barrier to entry. This trick is often used by lawyers to ensure that clients keep
 			coming back to them to ask questions about the documents they wrote rather than simply reading
-			the documents themselves. It’s also used by the Myers-Biggs Type Indicator; if their 4
-			categories were standard personality traits like in the Big Five, people wouldn’t need a test
-			to know where they fall.
+			the documents themselves. It’s also used by the Myers-Biggs Type Indicator; if their
+			"personality traits" were English words used correctly, like in the <a
+				target="_blank"
+				href="https://en.wikipedia.org/wiki/Big_Five_personality_traits">Big Five</a
+			>, people wouldn’t need a test to know where they fall.
 		</p>
 	</li>
 	<li>
@@ -40,10 +47,11 @@
 			To avoid offending people. Simple explanations can be offensive. Sometimes, their simplicity
 			is the very reason for their offensiveness. Verbosity is a core tenet of politeness; it shows
 			you put in effort. When you make a topic seem simple, it can offend those who spent years
-			studying the topic. Other times, simple explanations are offensive because they’re rooted in
-			truth. Truth tends to be simpler than fiction because logical consistency is built-in, and
-			truth is often offensive. Many social phenomena can be explained more simply, but elaborating
-			this point on the public internet would not be worth it for me.
+			studying the topic. Other times, simple explanations are offensive because they’re more true
+			than the standard narrative. Truth tends to be simpler than fiction because logical
+			consistency is built-in, and fictions often exist to mask offensive truths. Many social
+			phenomena can be explained more simply, but elaborating this point on the public internet
+			would not be worth it for me.
 		</p>
 	</li>
 	<li>
@@ -53,21 +61,20 @@
 			expectation for books to be a certain size, a size far beyond the scope of the average
 			author’s original ideas. So most books end up being a page worth of ideas dragged out to
 			book-length via needless anecdotes, examples, analogies, definitions, quotes, flowery prose,
-			paraphrasings of Wikipedia pages, etc., interlaced with rehashes of the main point.
+			and paraphrasings of Wikipedia pages, interlaced with rehashes of the main point.
 		</p>
 	</li>
 </ol>
 <p>
-	Other times, there’s an incentive to simplify. To make a piece of content viral, it needs to be
-	simple enough for a layperson to consume. Yet because simplification is so difficult, creators
-	usually instead dumb down the material, stripping out or falsifying the parts that are hard to
-	understand. Consumers leave satisfied because they’re ill-equipped to realize they missed the
-	important parts.
+	Sometimes it may seem the incentive is to simplify, when it isn't. To make a piece of content
+	viral, it needs to be simple enough for a layperson to consume. But because simplification is so
+	difficult, creators usually instead dumb down the material, stripping out or falsifying the parts
+	that are hard to understand. Consumers leave satisfied because they’re ill-equipped to realize
+	they missed the important parts.
 </p>
 <p>
-	Consequently, almost everything we see in the world is either dumbed down or overcomplicated. It’s
-	so ubiquitous that most people never realize hard things can be simpler. Often it doesn’t matter;
-	sometimes we just need the quickest working solution.
+	Consequently, almost everything we see in the world is either dumbed down or overcomplicated. Most
+	people never realize hard things can be simpler.
 </p>
 <p>Simplicity has three benefits:</p>
 <ol>
@@ -81,11 +88,11 @@
 	<li><p>Is memorable for longer.</p></li>
 </ol>
 <p>
-	It’s rare that these advantages are so powerful and unadulterated that an idea is distributed in
-	its simplest form. It can happen when someone is financially dependent on the efficacy of other
-	peoples’ long-term execution--Paul Graham, for example, wrote simple startup advice for the
-	companies he invested in. It can also happen when someone wants to target people who appreciate
-	simplicity, as is the case with 3blue1brown. But most often, simplified ideas are kept secret, for
-	personal use and close friends. The simplest version of any idea is probably in someone’s private
-	journal.
+	Very occasionally are these advantages are so desired and unadulterated that an idea is
+	distributed in its simplest form. It can happen when someone is financially dependent on the
+	efficacy of other peoples’ long-term execution--Paul Graham, for example, wrote simple startup
+	advice for the companies he invested in. It can also happen when someone wants to target people
+	who appreciate simplicity, as is the case with 3blue1brown. But most often, simplified ideas are
+	kept secret, for personal use and close friends. The simplest version of any idea is probably in
+	someone’s private journal.
 </p>
