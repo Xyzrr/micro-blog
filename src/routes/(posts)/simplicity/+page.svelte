@@ -5,7 +5,7 @@
 <div class="opacity-60 mb-8">Janurary 2023</div>
 <p>
 	Most people find complex things (products, thought pieces, etc.) more impressive than simple
-	things. Much of academic writing rides on this premise. In tech, it can slow adoption of new
+	things. Much of academic writing rides on this premise. In tech, it can slow the adoption of new
 	products. Anything sleeker than Salesforce must not be as powerful, right?
 </p>
 <p>
