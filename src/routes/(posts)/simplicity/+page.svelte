@@ -87,11 +87,11 @@
 	<li><p>Is memorable for longer.</p></li>
 </ol>
 <p>
-	Very occasionally are these advantages are so desired and unadulterated that an idea is
-	distributed in its simplest form. It can happen when someone is financially dependent on the
-	efficacy of other peoples’ long-term execution--Paul Graham, for example, wrote simple startup
-	advice for the companies he invested in. It can also happen when someone wants to target people
-	who appreciate simplicity, as is the case with 3blue1brown. But most often, simplified ideas are
-	kept secret, for personal use and close friends. The simplest version of any idea is probably in
-	someone’s private journal.
+	Very occasionally, the stars align such that a smart person is sufficiently motivated by these
+	advantages to reduce an idea to its simplest form and distribute it that way. It can happen when
+	someone is financially dependent on the efficacy of other peoples’ long-term execution--Paul
+	Graham, for example, wrote simple startup advice for the companies he invested in. It can also
+	happen when someone wants to target people who appreciate simplicity, as is the case with
+	3blue1brown. But most often, simplified ideas are kept secret, for personal use and close friends.
+	The simplest version of any idea is probably in someone’s private journal.
 </p>
