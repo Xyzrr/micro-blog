@@ -18,8 +18,8 @@
 	A lot of people will tell you your grief will seem silly in retrospect, but frankly it never did
 	for me. The problem with a lackluster pedigree is that you have to convince people you're worth
 	knowing, rather than them just assuming you are. This is okay if you're comfortable with a quiet
-	big tech job, because that only requires a few engineers to recognize your talent. But if you want
-	a career that involves interacting with a lot of people, this kind of thing slows down your
+	tech job, because that only requires a few engineers to recognize your talent. But if you want a
+	career that involves interacting with a lot of people, this kind of thing slows down your
 	exponential growth, which is a big deal.
 </p>
 
