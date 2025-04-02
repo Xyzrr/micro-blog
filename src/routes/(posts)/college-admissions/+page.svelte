@@ -11,7 +11,7 @@
 
 <p>
 	I'm writing this for anyone who just got rejected from top colleges because they focused on coding
-	cool projects in school rather than mix-maxing admissions.
+	cool projects in school rather than min-maxing admissions.
 </p>
 
 <p>
@@ -26,23 +26,23 @@
 <p>
 	You can compensate by grabbing some other prestigious badge, like by joining a high profile tech
 	company, which engineers and recruiters will weigh far more than college. But in truth nothing has
-	quite the cross-industry, cross-age recognition that universities do, which matters if you need to
-	e.g. sell services to execs at non-tech businesses. Being underestimated by people outside the
-	tech bubble also changes your general social experience of life; you inadvertently become more
+	quite the cross-industry, cross-age recognition that universities do, which matters if you need
+	to, e.g., sell services to execs at non-tech businesses. Being underestimated by people outside
+	the tech bubble also changes your general social experience of life; you inadvertently become more
 	married to tech.
 </p>
 
 <p>
-	I don’t know if there existed any “silver lining” to rejection that could have made me feel
-	better. The best one was perhaps the idea that the difficulty mode of your life is now set, and if
-	you’re truly a god gamer then you’ll embrace the higher difficulties. And there will be people who
+	I don’t know if there exists any “silver lining” to rejection that could have made me feel better.
+	The best one was perhaps the idea that the difficulty mode of your life is now set, and if you’re
+	truly a god gamer then you’ll embrace the higher difficulties. And there will be people who
 	respect you more for it.
 </p>
 
 <p>
-	So what now? If you don’t intend on lowering your ambitions, in order to still achieve them you’ll
+	So what now? If you don’t intend to lower your ambitions, in order to still achieve them you’ll
 	need to multiply your risk tolerance and expose yourself to opportunities to get lucky. There are
-	a lot more such opportunities in SF than most would think (I’ve personally just-missed several
+	a lot more such opportunities in SF than most would think (I’ve personally narrowly missed several
 	that would have made me pretty rich, I expect to catch one shortly). I recommend visiting / moving
 	here as soon as you can, meeting people at hackathons, building in public, and engaging with the
 	internet. This is all really hard if you're introverted, which held me back, but you have time to
