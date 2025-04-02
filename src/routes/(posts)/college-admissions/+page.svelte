@@ -25,10 +25,10 @@
 
 <p>
 	You can compensate by grabbing some other prestigious badge, like by joining a high profile tech
-	company, which engineers and recruiters will weigh far more than college. But in truth nothing has
+	company, which people in your field will weigh far more than college. But in truth nothing has
 	quite the cross-industry, cross-age recognition that universities do, which matters if you need
 	to, e.g., sell services to execs at non-tech businesses. Being underestimated by people outside
-	the tech bubble also changes your general social experience of life; you inadvertently become more
+	your bubble also changes your general social experience of life; you inadvertently become more
 	married to tech.
 </p>
 
