@@ -34,7 +34,7 @@
 
 <p>
 	I don’t know if there exists any “silver lining” to rejection that could have made me feel better.
-	The best one was perhaps the idea that the difficulty mode of your life is now set, and if you’re
+	The best one is perhaps the idea that the difficulty mode of your life is now set, and if you’re
 	truly a god gamer then you’ll embrace the higher difficulties. And there will be people who
 	respect you more for it.
 </p>
