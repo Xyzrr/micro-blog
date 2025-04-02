@@ -46,5 +46,6 @@
 	that would have made me pretty rich, I expect to catch one shortly). I recommend visiting / moving
 	here as soon as you can, meeting people at hackathons, building in public, and engaging with the
 	internet. This is all really hard if you're introverted, which held me back, but you have time to
-	find your rhythm. I’m down to hop on a call with anyone who needs it, just reach out here.
+	find your rhythm. I’m down to hop on a call with anyone who needs it, just reach out
+	<a href="mailto:johnlongqian+totherejected@gmail.com">here</a>.
 </p>
