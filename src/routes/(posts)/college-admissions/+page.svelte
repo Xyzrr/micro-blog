@@ -1,8 +1,8 @@
 <svelte:head>
-	<title>To the rejected</title>
+	<title>College admissions</title>
 </svelte:head>
 
-<h1>To the rejected</h1>
+<h1>College admissions</h1>
 <div class="opacity-60 mb-8">April 2024</div>
 
 <p>
@@ -18,7 +18,7 @@
 	A lot of people will tell you your grief will seem silly in retrospect, but frankly it never did
 	for me. The problem with a lackluster pedigree is that you have to convince people you're worth
 	knowing, rather than them just assuming you are. This is okay if you're comfortable with a quiet
-	tech job, because that only requires a few engineers to recognize your talent. But if you want a
+	tech job, because that only requires a few engineers to see potential in you. But if you want a
 	career that involves interacting with a lot of people, this kind of thing slows down your
 	exponential growth, which is a big deal.
 </p>
@@ -29,7 +29,7 @@
 	cross-industry, cross-age recognition that universities do, which matters if you need to, e.g.,
 	sell services to execs at non-tech businesses. Being underestimated by people outside your bubble
 	also changes your general social experience of life; you inadvertently become more married to
-	tech.
+	tech, more wary of "normies".
 </p>
 
 <p>
@@ -47,5 +47,5 @@
 	here as soon as you can, meeting people at hackathons, building in public, and engaging with the
 	internet. This is all really hard if you're introverted, which held me back, but you have time to
 	find your rhythm. I’m down to hop on a call with anyone who needs it, just reach out
-	<a href="mailto:johnlongqian+totherejected@gmail.com">here</a>.
+	<a href="mailto:johnlongqian+collegeadmissions@gmail.com">here</a>.
 </p>
