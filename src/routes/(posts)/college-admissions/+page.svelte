@@ -3,7 +3,7 @@
 </svelte:head>
 
 <h1>College admissions</h1>
-<div class="opacity-60 mb-8">April 2024</div>
+<div class="opacity-60 mb-8">April 2025</div>
 
 <p>
 	College admissions decisions are rolling out now. It seems they've grown even less reasonable.
