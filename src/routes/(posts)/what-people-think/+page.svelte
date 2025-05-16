@@ -5,94 +5,44 @@
 <h1>What people think of you</h1>
 <div class="opacity-60 mb-8">May 2025</div>
 <p>
-	Most people find complex things (products, thought pieces, etc.) more impressive than simple
-	things. Much of academic writing rides on this premise. In tech, it can slow the adoption of new
-	products. Anything sleeker than Salesforce must not be as powerful, right?
+	Growing up, I really bought into the idea that it doesn't matter what people think of you outside
+	of a few good friends. I've gradually come to realize how wrong that was. If you work hard your
+	whole life, your individual skill level probably plateaus around age 25-30. Thereafter, nearly all
+	career progression comes from gains in social capital, aka what people think of you. And because
+	social capital compounds over time, it's best to start caring what people think of you as young as
+	possible.
 </p>
+
 <p>
-	The complexity bias exists because when you look around, smarter people have more complex ideas.
-	But that's because smarter people work on harder problems. When you stratify problem space by
-	difficulty, smarter people have simpler ideas.
+	The advice to not care what others think comes from good intentions, of course. The default way we
+	care about others' opinions--the way we were genetically programmed to--is extremely suboptimal in
+	the modern world. We were programmed for a world where nearly every person we met would likely
+	remain part of our lives permanently, and where any feedback we received was much more likely to
+	be life-or-death. Consequently, we're way too affected by the opinion of whoever happens to be
+	talking to us, especially when it's negative.
 </p>
+
 <p>
-	Given a problem, the first solution you find generally has excess complexity. It's a semi-random
-	point in the solution space, so it's statistically unlikely to be the simplest. Simplification
-	requires you to keep searching, with each reduction taking exponentially longer, because there's
-	exponentially fewer simple solutions than there are complex ones. Situations where this hard work
-	is incentivized are scarce. Often you just need a working solution, simplicity be damned. And too
-	often there's an incentive to <em>increase</em> complexity--to obfuscate. The four main reasons are:
+	So you have to suppress your primal feelings and instead care about peoples' opinions of you
+	proportionally to how much they actually matter. But there's a lot of art that goes into that.
+	Most people whose opinions matter are people you never met, and you need a very good world model
+	to accurately estimate who might matter for you. Moreover, you don't necessarily care about their
+	opinions of you today, you care what their opinion will be when you need them.
 </p>
-<ol>
-	<li>
-		<p>
-			To appear smart. This is common in academia, consulting, and any other setting where receiving
-			money requires convincing non-experts that you’re smart. When they don’t know of a simpler
-			solution themselves, they’ll use the complexity of your solution as a proxy for the difficulty
-			of the problem you’ve solved.
-		</p>
-	</li>
-	<li>
-		<p>
-			To create a barrier to entry. This trick is often used by lawyers to ensure that clients keep
-			coming back to them to ask questions about the documents they wrote rather than simply reading
-			the documents themselves. It’s also used by the Myers-Biggs Type Indicator; if their
-			"personality traits" were English words used correctly, like in the <a
-				target="_blank"
-				href="https://en.wikipedia.org/wiki/Big_Five_personality_traits">Big Five</a
-			>, people wouldn’t need a test to know where they fall.
-		</p>
-	</li>
-	<li>
-		<p>
-			To avoid offending people. Simple explanations can be offensive. Sometimes, their simplicity
-			is the very reason for their offensiveness. Verbosity is a core tenet of politeness; it shows
-			you put in effort. When you make a topic seem simple, it can offend those who spent years
-			studying the topic. Other times, simple explanations are offensive because they’re more true
-			than the standard narratives. Truth tends to be simpler than fiction because logical
-			consistency is built-in, and fictions often exist to mask offensive truths. Many social
-			phenomena can be explained more simply, but elaborating this point on the public internet
-			would not be worth it for me.
-		</p>
-	</li>
-	<li>
-		<p>
-			To publish a book. Although this is usually just a special case of #1, publishing books can
-			genuinely help you reach audiences that other mediums can’t. But there’s a perverse
-			expectation for books to be a certain size, a size far beyond the scope of the average
-			author’s original ideas. So most books end up being a page worth of ideas dragged out to
-			book-length via needless anecdotes, examples, analogies, definitions, quotes, flowery prose,
-			and paraphrasings of Wikipedia pages, interlaced with rehashes of the main point.
-		</p>
-	</li>
-</ol>
+
 <p>
-	Sometimes it may seem the incentive is to simplify, when it isn't. To make a piece of content
-	viral, it needs to be simple enough for a layperson to consume. But because simplification is so
-	difficult, creators usually instead dumb down the material, stripping out or falsifying the parts
-	that are hard to understand. Consumers leave satisfied because they’re ill-equipped to realize
-	they missed the important parts.
+	I only started noticing the value of social capital after I became a founder. As an engineer
+	working a normal job, it's hard to convert social capital into money. But as a founder, your
+	social capital suddenly becomes one of the main bottlenecks to success. Winning the
+	gratitude/trust/respect of someone is a lot like buying a call option on them. There's theta decay
+	as they gradually forget about you, but if they become successful down the road--especially if
+	it's partly because of you--you can 'exercise' your option for a lot of value.
 </p>
+
 <p>
-	Consequently, almost everything we see in the world is either dumbed down or overcomplicated. Most
-	people never realize hard things can be simpler.
-</p>
-<p>Simplicity has three benefits:</p>
-<ol>
-	<li><p>Minimizes time-to-fully-understand.</p></li>
-	<li>
-		<p>
-			Generalizes better. A derivative of Occam’s razor is that simpler solutions tend to cover more
-			cases.
-		</p>
-	</li>
-	<li><p>Is memorable for longer.</p></li>
-</ol>
-<p>
-	Very occasionally, the stars align such that a smart person is sufficiently motivated by these
-	advantages to reduce an idea to its simplest form and distribute it that way. It can happen when
-	someone is financially dependent on the efficacy of other peoples’ long-term execution--Paul
-	Graham, for example, wrote simple startup advice for the companies he invested in. It can also
-	happen when someone wants to target people who appreciate simplicity, as is the case with
-	3blue1brown. But most often, simplified ideas are kept secret, for personal use and close friends.
-	The simplest version of any idea is probably in someone’s private journal.
+	This is why Sam Altman, possibly the greatest social capital accumulator to ever live, was known
+	for taking cold calls from 15 year old kids. Before he became too famous, this was a very good
+	filter; if a kid knew who Sam Altman was and had the agency to cold call him, that kid was
+	probably going to become fairly successful. The most SPY ever grew in a year is 31.3%. A
+	hyper-ambitious kid may grow that much every 6 months. That's a good investment.
 </p>
