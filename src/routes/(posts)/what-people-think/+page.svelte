@@ -64,5 +64,13 @@
 <p>
 	At this point it's probably helpful to define social capital in a more quantifiable way. Your
 	social capital is the sum of all the help you could get from other people, minus the effort it'd
-	take to get that help.
+	take to get that help. It's hard to reduce this to one number because these things are so illiquid
+	and nonfungible, but you can get an upper bound on the value of anything by imagining how much
+	you'd sell it for if you could.
+</p>
+
+<p>
+	Having an impressive public image on the internet nets you a lot of social capital, because it
+	increases almost anyone's willingness to help you. Being physically attractive has similar
+	effects, though capitalizing on that comes with some perils.
 </p>
