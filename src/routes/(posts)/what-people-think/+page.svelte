@@ -49,8 +49,8 @@
 
 <p>
 	I realize how transactional this all sounds. Please note that this blog post is meant to be
-	epistemic, not prescriptive. I suspect thinking this way all the time isn't healthy, and think
-	it's still worth helping people who will never be able to help you back. But I suspect the people
-	who become wealthiest are the ones that are really good at analyzing social interactions as
-	investments.
+	epistemic, not prescriptive. I suspect that thinking this way all the time isn't healthy, and I
+	think it's very much worth helping people who will never be able to help you back. But I suspect
+	the people who become wealthiest are the ones that are really good at analyzing social
+	interactions as investments.
 </p>
