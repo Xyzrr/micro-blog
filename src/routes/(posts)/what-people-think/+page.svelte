@@ -54,3 +54,15 @@
 	the people who become wealthiest are the ones that are really good at analyzing social
 	interactions as investments.
 </p>
+
+<p>
+	I've discussed gaining social capital by helping individual people. But these days, it seems like
+	most social capital is actually acquired by creating value for people in bulk or by working on
+	your public image, managing how people perceive you from afar.
+</p>
+
+<p>
+	At this point it's probably helpful to define social capital in a more quantifiable way. Your
+	social capital is the sum of all the help you could get from other people, minus the effort it'd
+	take to get that help.
+</p>
