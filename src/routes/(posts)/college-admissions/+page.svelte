@@ -16,11 +16,11 @@
 
 <p>
 	A lot of people will tell you your grief will seem silly in retrospect, but frankly it never did
-	for me. The problem with a lackluster pedigree is that you have to convince people you're worth
-	knowing, rather than them just assuming you are. This is okay if you're comfortable with a quiet
-	tech job, because that only requires a few engineers to see potential in you. But if you want a
-	career that involves interacting with a lot of people, this kind of thing slows down your
-	exponential growth, which is a big deal.
+	for me, even though I'm doing pretty well by any standard. The problem with a lackluster pedigree
+	is that you have to convince people you're worth knowing, rather than them just assuming you are.
+	This is okay if you're comfortable with a quiet tech job, because that only requires a few
+	engineers to see potential in you. But if you want a career that involves interacting with a lot
+	of people, this kind of thing slows down your exponential growth, which is a big deal.
 </p>
 
 <p>
@@ -42,10 +42,9 @@
 <p>
 	So what now? If you don’t intend to lower your ambitions, in order to still achieve them you’ll
 	need to multiply your risk tolerance and expose yourself to opportunities to get lucky. There are
-	a lot more such opportunities in SF than most would think (I’ve personally narrowly missed several
-	that would have made me pretty rich, I expect to catch one shortly). I recommend visiting / moving
-	here as soon as you can, meeting people at hackathons, building in public, and engaging with the
-	internet. This is all really hard if you're introverted, which held me back, but you have time to
-	find your rhythm. I’m down to hop on a call with anyone who needs it, just reach out
+	a lot more such opportunities in SF than most would think. I recommend visiting / moving here as
+	soon as you can, meeting people at hackathons, building in public, and engaging with the internet.
+	This is all really hard if you're introverted, which held me back, but you have time to find your
+	rhythm. I’m down to hop on a call with anyone who needs it, just reach out
 	<a href="mailto:johnlongqian+collegeadmissions@gmail.com">here</a>.
 </p>
