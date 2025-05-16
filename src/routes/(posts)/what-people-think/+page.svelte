@@ -51,8 +51,8 @@
 	I realize how transactional this all sounds. Please note that this blog post is meant to be
 	epistemic, not prescriptive. I suspect that thinking this way all the time isn't healthy, and I
 	think it's very much worth helping people who will never be able to help you back. But I suspect
-	the people who become wealthiest are the ones that are really good at analyzing social
-	interactions as investments.
+	the most consistent trait of the wealthiest people in the world is a strong ability and tendency
+	to analyze social interactions as investments.
 </p>
 
 <p>
@@ -66,7 +66,9 @@
 	social capital is the sum of all the help you could get from other people, minus the effort it'd
 	take to get that help. It's hard to reduce this to one number because these things are so illiquid
 	and nonfungible, but you can get an upper bound on the value of anything by imagining how much
-	you'd sell it for if you could.
+	you'd sell it for if you could. Would you rather lose half your net worth or half your social
+	capital? If you answered the former, that means you have more wealth stored in net worth than
+	social capital, which is a good thing if you're old, but is probably suboptimal if you're young.
 </p>
 
 <p>
