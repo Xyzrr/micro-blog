@@ -25,8 +25,8 @@
 <p>
 	So you have to suppress your primal feelings and instead care about peoples' opinions of you
 	proportionally to how much they actually matter. But there's a lot of art that goes into that.
-	Most people whose opinions matter are people you never met, and you need a very good world model
-	to accurately estimate who might matter for you. Moreover, you don't necessarily care about their
+	Most people whose opinions matter are people you never met, so you need a very good world model to
+	estimate which of them might matter for you. Moreover, you don't necessarily care about their
 	opinions of you today, you care what their opinion will be when you need them.
 </p>
 
