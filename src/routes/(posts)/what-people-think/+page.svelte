@@ -51,8 +51,8 @@
 	I realize how transactional this all sounds. Please note that this blog post is meant to be
 	epistemic, not prescriptive. I suspect that thinking this way all the time isn't healthy, and I
 	think it's very much worth helping people who will never be able to help you back. But I suspect
-	the most consistent trait of the wealthiest people in the world is a strong ability and tendency
-	to analyze social interactions as investments.
+	that the ability and tendency to analyze social interactions as investments is the single most
+	consistent outlier trait of the wealthiest people in the world.
 </p>
 
 <p>
