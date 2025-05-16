@@ -48,6 +48,8 @@
 </p>
 
 <p>
-	I realize how transactional this all sounds. Please note that this blog post is meant to be purely
-	epistemic, not prescriptive.
+	I realize how transactional this all sounds. Please note that this blog post is meant to be
+	epistemic, not prescriptive. I think there's a lot of joy to be found in helping people who will
+	never be able to help you back. But I suspect the people who become wealthiest are the ones who
+	think of almost every interaction as an investment.
 </p>
