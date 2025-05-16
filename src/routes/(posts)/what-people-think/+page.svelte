@@ -23,7 +23,7 @@
 </p>
 
 <p>
-	So you have to suppress your primal feelings and instead care about peoples' opinions of you
+	So you have to suppress your primal instincts and instead care about peoples' opinions of you
 	proportionally to how much they actually matter. But there's a lot of art that goes into that.
 	Most people whose opinions matter are people you never met, so you need a very good world model to
 	estimate which of them might matter for you. Moreover, you don't necessarily care about their
@@ -33,7 +33,7 @@
 <p>
 	I only started noticing the value of social capital after I became a founder. As an engineer
 	working a normal job, it's hard to convert social capital into money. But as a founder, your
-	social capital suddenly becomes one of the main bottlenecks to success. Winning the
+	social capital suddenly becomes one of the main bottlenecks to your company's success. Winning the
 	gratitude/trust/respect of someone is a lot like buying a call option on them. There's theta decay
 	as they gradually forget about you, but if they become successful down the road--especially if
 	it's partly because of you--you can 'exercise' your option for a lot of value.
@@ -45,4 +45,9 @@
 	filter; if a kid knew who Sam Altman was and had the agency to cold call him, that kid was
 	probably going to become fairly successful. The most SPY ever grew in a year is 31.3%. A
 	hyper-ambitious kid may grow that much every 6 months. That's a good investment.
+</p>
+
+<p>
+	I realize how transactional this all sounds. Please note that this blog post is meant to be purely
+	epistemic, not prescriptive.
 </p>
