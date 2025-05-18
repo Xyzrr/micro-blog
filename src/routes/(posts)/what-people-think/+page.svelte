@@ -97,7 +97,8 @@
 	Status is inherently compounding. When you have enough status, people find excuses to introduce
 	you to their friends, rather than finding excuses not to. The higher your status, the more they
 	filter their introductions to other high status people. There's no point of diminishing returns,
-	there's only changing tides, aging, and death.
+	as long as you keep finding new wells as old ones dry up. The compounding only stops when you get
+	tired or die.
 </p>
 
 <p>
