@@ -60,10 +60,11 @@
 	I realize how transactional this all sounds. Please note that this blog post is meant to be
 	epistemic, not prescriptive. I suspect that thinking this way all the time isn't healthy, and I
 	think it's very much worth helping people who will never be able to help you back. But I suspect
-	that the ability and tendency to analyze social interactions as investments is the single most
-	consistent outlier trait of the wealthiest people in the world. If you've ever wondered how some
-	people seem to always end up at the top despite not having clearly outstanding talents, this is
-	probably the reason. It's actually a lot simpler than the 4D chess people think billionaires play.
+	that, other than ambition+determination, the ability and tendency to analyze social interactions
+	as investments is the most consistent outlier trait of the wealthiest people in the world. If
+	you've ever wondered how some people seem to always end up at the top despite not having clearly
+	outstanding talents, this is probably the reason. It's actually a lot simpler than the 4D chess
+	people think billionaires play.
 </p>
 
 <p>
@@ -95,7 +96,8 @@
 <p>
 	Status is inherently compounding. When you have enough status, people find excuses to introduce
 	you to their friends, rather than finding excuses not to. The higher your status, the more they
-	filter their introductions to other high status people.
+	filter their introductions to other high status people. There's no point of diminishing returns,
+	there's only changing tides, aging, and death.
 </p>
 
 <p>
