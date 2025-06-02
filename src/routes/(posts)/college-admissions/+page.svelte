@@ -45,6 +45,7 @@
 	a lot more such opportunities in SF than most would think. I recommend visiting / moving here as
 	soon as you can, meeting people at hackathons, building in public, and engaging with the internet.
 	This is all really hard if you're introverted, which held me back, but you have time to find your
-	rhythm. I’m down to hop on a call with anyone who needs it, just reach out
+	rhythm. I’m down to hop on a call with anyone who needs it (especially if you might want to work
+	with our startup, but not required)--just reach out
 	<a href="mailto:johnlongqian+collegeadmissions@gmail.com">here</a>.
 </p>
