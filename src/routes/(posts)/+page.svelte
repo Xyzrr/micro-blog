@@ -30,7 +30,7 @@
 <h1>Welcome!</h1>
 <p>
 	Thanks for visiting my blog. I'm a cofounder of <a
-		href="https://www.matrices.dev?ref=blog.johnqian.com"
+		href="https://www.matrices.ai?ref=blog.johnqian.com"
 		target="_blank">Matrices</a
 	>, previously eng at Adept and Weights & Biases. Here I try to distill my thoughts to their
 	simplest forms.
