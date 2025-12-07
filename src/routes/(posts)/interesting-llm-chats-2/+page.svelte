@@ -2,7 +2,7 @@
 	<title>My chats with LLMs</title>
 </svelte:head>
 <h1>My chats with LLMs</h1>
-<div class="opacity-60 mb-8">December 2024</div>
+<div class="opacity-60 mb-8">December 2025</div>
 <p>
 	I spend maybe 15% of my waking hours talking to LLMs, and I don't think that's uncommon in the Bay
 	Area, but almost none of these conversations are ever shared on the internet.
