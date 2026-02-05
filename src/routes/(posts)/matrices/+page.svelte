@@ -173,10 +173,12 @@
 </p>
 <h2>Why we stopped</h2>
 <p>
-	Around October we tried pivoting to the new approach. But a couple months in, we realized we were
-	struggling. The personas we hired and the infra we had built were all around "simulate the
-	internet". Doing the new way right would have meant laying off half the team and throwing out most
-	of what we'd built.
+	A few months before deciding to wind down, we tried pivoting to the task-first approach. It was
+	clearly directionally better, but we quickly realized we were struggling. The personas we hired
+	and the infra we had built were all around "simulate the internet". Doing the new way right would
+	have meant laying off half the team and throwing out most of what we'd built. The personas we
+	hired and the infra we had built were all around "simulate the internet". Doing the new way right
+	would have meant laying off half the team and throwing out most of what we'd built.
 </p>
 <p>
 	We might have done that if we still believed in the market. But we didn't. Even with the right
