@@ -88,7 +88,7 @@
 </p>
 <h2>How we got the problem wrong</h2>
 <p>
-	This part might be useful if you're in the space and I haven't convinced you to leave.
+	This part might be useful if you're in the space and I haven't scared you off.
 </p>
 <p>
 	We got started because a lab told us they needed sandboxed versions of real websites. So we
