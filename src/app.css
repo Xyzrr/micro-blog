@@ -46,6 +46,29 @@ blockquote {
 	border-left: 2px solid rgb(201, 199, 204);
 }
 
+.context {
+	display: block;
+	margin: 20px 0;
+	padding: 12px 16px;
+	font-size: 14px;
+	color: rgb(100, 98, 103);
+	background: rgb(238, 238, 240);
+	border-radius: 4px;
+}
+
+.context p {
+	font-size: 14px;
+	margin: 8px 0;
+}
+
+.context p:first-child {
+	margin-top: 0;
+}
+
+.context p:last-child {
+	margin-bottom: 0;
+}
+
 .main a {
 	text-decoration: underline;
 	opacity: 0.7;
@@ -68,7 +91,7 @@ code {
 	border-radius: 4px;
 }
 
-pre > code {
+pre>code {
 	display: block;
 	overflow-x: auto;
 	padding: 4px;
