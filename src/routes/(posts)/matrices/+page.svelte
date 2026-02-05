@@ -196,5 +196,5 @@
 </p>
 <p>
 	If you're looking to hire remote engineers or data annotators with AI experience, please let me
-	know. We've hired some really great people, and they're looking for new homes.
+	know. We've hired some really great people, and they're looking for the next thing.
 </p>
