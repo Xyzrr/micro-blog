@@ -114,12 +114,15 @@
 	<li>Do network requests need to look realistic?</li>
 </ul>
 <p>
-	We'd ask researchers these questions and they'd shrug; "we don't know till we try". But this is a
-	real problem, because each of these questions could steer us in totally different directions.
-	Answers to these questions could multiply our delivery timelines by 10-100x, and require hiring
-	entirely different personas of engineers and task creators. We essentially took random guesses,
-	and it gradually dawned on us how crippling that was, because these decisions are fairly committal
-	and migrating later is much harder than starting from scratch.
+	We'd ask researchers these questions and they'd shrug, "we don't know till we try". But this was a
+	real problem, because these decisions are highly committal. Different answers imply 10-100x
+	different timelines and entirely different hiring strategies. We took what were, in retrospect,
+	random guesses. Initially our guesses felt validated, because labs handed us contracts. But
+	looking back, I think they were really just validating our vibes and pedigrees. As we got more
+	intuition on how models learn, we started thinking many of our early calls were wrong, but we were
+	shackled by the infrastructure we'd already built. After spending some time wondering how to avoid
+	making the wrong commitments again, we realized we should just be less committal and more
+	experimental. Which led us to reframe the problem entirely.
 </p>
 <p>
 	The right way to frame the problem is task-first. What economically valuable tasks do models fail
