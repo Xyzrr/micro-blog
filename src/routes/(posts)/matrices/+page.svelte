@@ -117,12 +117,12 @@
 	We'd ask researchers these questions and they'd shrug, "we don't know till we try". But this was a
 	real problem, because these decisions are highly committal. Different answers imply 10-100x
 	different timelines and entirely different hiring strategies. We took what were, in retrospect,
-	random guesses. Initially our guesses felt validated, because labs handed us contracts. But
-	looking back, I think they were really just validating our vibes and pedigrees. As we got more
-	intuition on how models learn, we started thinking many of our early calls were wrong, but we were
-	shackled by the infrastructure we'd already built. After spending some time wondering how to avoid
-	making the wrong commitments again, we realized we should just be less committal and more
-	experimental. Which led us to reframe the problem entirely.
+	random guesses. Initially our guesses felt validated, because labs handed us contracts, but
+	looking back, I think we would have gotten contracts regardless of our implementation decisions.
+	As we got more intuition on how models learn, we started thinking many of our early calls were
+	wrong, but we were shackled by the infrastructure we'd already built. After spending some time
+	wondering how to avoid making the wrong commitments again, we realized we should just be less
+	committal and more experimental. Which led us to reframe the problem entirely.
 </p>
 <p>
 	The right way to frame the problem is task-first. What economically valuable tasks do models fail
