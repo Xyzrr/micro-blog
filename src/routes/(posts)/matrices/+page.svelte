@@ -66,7 +66,7 @@
 	are getting shockingly good at generalization".
 </p>
 <p>
-	Maybe I was just talking to the wrong people at first. Which points to another problem we had: our
+	Maybe I should have talked to more people. But this points to another problem we had: our
 	understanding of the domain was largely bottlenecked by how many friends I could make at the labs
 	that were willing to share useful insights. I tried my hand at this networking, but it felt wrong
 	because I had little to offer the researchers in return; the asymmetric neediness wasn't a good
