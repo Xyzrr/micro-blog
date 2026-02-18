@@ -134,11 +134,11 @@
 	is a deep and economically valuable task.
 </p>
 <p>
-	There's a very scalable way to do this, proposed by my friend Shaya Zarkesh. Start with either a
-	replica of PowerPoint or something very similar open source. Find a library of real presentations.
-	For each one, AI-generate a spec of the presentation, and the task is to build a presentation from
-	the spec. The grader then visually compares the original presentation with the created one, and
-	scores based on the difference.
+	There's a very scalable way to do this. Start with either a replica of PowerPoint or something
+	very similar open source. Find a library of real presentations. For each one, AI-generate a spec
+	of the presentation, and the task is to build a presentation from the spec. The grader then
+	visually compares the original presentation with the created one, and scores based on the
+	difference.
 </p>
 <p>
 	This very quickly gets you thousands of tasks with a great difficulty distribution. There are
