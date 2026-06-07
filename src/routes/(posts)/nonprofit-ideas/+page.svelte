@@ -81,10 +81,10 @@
 	something, but it isn’t; public opinion is highly swayable, leaders are swayed by sufficiently
 	strong public opinion, and a shared concrete vision can go far. The world is still lacking good
 	drama that helps people understand AGI more than it misleads. A feature-length movie would be cooler
-	than a short, but it’d probably take so long it’d be outdated before release. Money doesn’t
-	directly solve the core challenge of combining good understanding of AGI with mastery of drama,
-	but I think money can set up a system where these talents collide. The ideal structure for this
-	may be something like a residency program for screenwriters paired with alignment researchers,
+	than a short, but it’d probably take so long it’d be outdated before release. 
+	Money can't manufacture a unicorn person who both understands AGI and can write great drama,
+	but it can build a system that brings the two halves together.
+	The ideal structure for this may be something like a residency program for screenwriters paired with alignment researchers,
 	backed with access to famous producers.
 </p>
 <p>
