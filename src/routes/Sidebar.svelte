@@ -6,6 +6,7 @@
 	<div class="list-none flex flex-col pt-10 sticky top-0">
 		<SidebarItem to="/">Home</SidebarItem>
 		<!-- <SidebarItem to="/matrices">Why we folded Matrices</SidebarItem> -->
+		<SidebarItem to="/philanthropy-ideas">Ideas for the newly rich</SidebarItem>
 		<SidebarItem to="/interesting-llm-chats-2">My chats with LLMs</SidebarItem>
 		<SidebarItem to="/college-admissions">College admissions</SidebarItem>
 		<SidebarItem to="/startup-spark">How a startup loses its spark</SidebarItem>
