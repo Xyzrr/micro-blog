@@ -22,6 +22,7 @@
 	</li>
 	<li>Results inexplicably take weeks to arrive</li>
 	<li>You need a referral from a doctor, which serves no meaningful filtering purpose</li>
+	<li>It's hard to know what to do with the results, since you don't know how your stats compare to others like you</li>
 </ul>
 <p>
 	It would be great to have a super comfortable sleep lab that lets you book online, no doctor in
