@@ -24,8 +24,8 @@
 	<li>You need a referral from a doctor, which serves no meaningful filtering purpose</li>
 </ul>
 <p>
-	It would be amazing to have a super comfortable sleep lab that lets you book online, no doctor in
-	the loop, allows you to book multiple nights in a row, sends you your results immediately so you
+	It would be great to have a super comfortable sleep lab that lets you book online, no doctor in
+	the loop, allows you to book multiple nights in a row, and sends you your results immediately so you
 	can have AI agents analyze them. There could be multiple tiers of fanciness, the top one nice
 	enough to be a good third date. Crucially, the lab’s data should be public, so anyone can compare
 	their results against the full distribution of people who slept in the same conditions. Staying
