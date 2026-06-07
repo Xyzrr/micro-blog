@@ -43,7 +43,7 @@
 <p>
 	A more brazen generalization of the public data sleep lab—a hospital that publicizes all of its
 	data by default: every scan, every diagnosis, every doctor recommendation, every declined patient,
-	every mistake. Protocols on Github. Ideally even video of every interaction.
+	every mistake. Protocols on GitHub. Ideally even video of every interaction.
 </p>
 <p>
 	Patients can request their data be omitted, but they’re encouraged and maybe even incentivized to
@@ -65,13 +65,13 @@
 	a trusted authority on evaluating any type of business with information asymmetry problems. It
 	could rate a wide range of institutions—hospitals, schools, restaurants, mortgage brokers,
 	startups, governments—or focus on one type. It would dig deep into how employees are promoted,
-	dark patterns like making it hard to switch out, pricing transparency, outcome accountability, and
+	dark patterns like making it hard to leave, pricing transparency, outcome accountability, and
 	so on.
 </p>
 <p>
 	The meta challenge is ensuring the rating agency itself retains good incentives. It helps to have
 	radical transparency, to be funded by vetted donors rather than the rated agencies themselves, and
-	maybe to have red-teams that seek inaccurate ratings, but none of these are complete solutions. I
+	maybe to have red teams that seek inaccurate ratings, but none of these are complete solutions. I
 	think it ultimately rests on the founders’ willpower to keep enforcing purity top-down.
 </p>
 
@@ -80,7 +80,7 @@
 	People tend to believe the fate of the world is predetermined by the forces of capitalism or
 	something, but it isn’t; public opinion is highly swayable, leaders are swayed by sufficiently
 	strong public opinion, and a shared concrete vision can go far. The world is still lacking good
-	drama that helps people understand AGI more than it misleads. A full-length movie would be cooler
+	drama that helps people understand AGI more than it misleads. A feature-length movie would be cooler
 	than a short, but it’d probably take so long it’d be outdated before release. Money doesn’t
 	directly solve the core challenge of combining good understanding of AGI with mastery of drama,
 	but I think money can set up a system where these talents collide. The ideal structure for this
@@ -113,6 +113,6 @@
 	that traditional startups are losing their meaning. AGI timelines are a major reason, but not the
 	only one. In general, as startups have become socially legitimized, they no longer feel like the
 	route for the crazy ones, the misfits, the rebels. They're now simply a standard career path. The
-	unconventional-minded need a new frontier to direct their ambition at, and impossible non-profits
+	unconventional-minded need a new frontier to direct their ambition at, and impossible nonprofits
 	may be it.
 </p>
