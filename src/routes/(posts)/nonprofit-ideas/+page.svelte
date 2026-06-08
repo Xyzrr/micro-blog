@@ -69,8 +69,9 @@
 	negative-sum behavior. A rating agency that deeply understands good incentive design could become
 	a trusted authority on evaluating any type of business with information asymmetry problems. It
 	could rate a wide range of institutions—hospitals, schools, restaurants, mortgage brokers,
-	startups, governments—or focus on one type. It would dig deep into how employees are promoted,
-	dark patterns like making it hard to leave, pricing transparency, outcome accountability, and
+	startups, governments—or focus on one type. It would field anonymous investigators,
+	some posing as customers, some getting hired, some working sources. They'd dig into promotion criteria, 
+	outcome accountability, pricing transparency, dark patterns like making it hard for customers to leave, and
 	so on.
 </p>
 <p>
