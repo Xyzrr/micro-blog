@@ -4,10 +4,9 @@
 <h1>Ideas for the newly rich</h1>
 <div class="opacity-60 mb-8">June 2026</div>
 <p>
-	With the AI labs about to IPO, we’ll have a lot of newly minted tech ~billionaires, many of whom
-	feel like they got rich somewhat incidentally and don’t have much ego tied to it. This is an
-	opportunity for some really interesting philanthropic pursuits to emerge. Here are some ambitious
-	ideas that I’m personally excited about:
+	With the AI labs about to IPO, we’ll soon have a strange new class of tech ~billionaires, many of whom
+	feel like they got rich somewhat incidentally and don’t have much ego tied to it. It's a chance for philanthropic projects that would never have worked before, 
+	whether they fund them or pursue them directly. Here are some ideas that I’m personally excited about:
 </p>
 
 <h2>Hotel-like sleep lab</h2>
@@ -17,7 +16,7 @@
 </p>
 <ul>
 	<li>
-		It’s nearly impossible to book multiple nights, which is crazy because single-night results are
+		It’s nigh impossible to book multiple nights, which is crazy because single-night results are
 		corrupted by the first-night effect given how unusual the lab sleeping conditions are
 	</li>
 	<li>Results inexplicably take weeks to arrive</li>
@@ -28,7 +27,7 @@
 	It would be great to have a super comfortable sleep lab that lets you book online, no doctor in
 	the loop, allows you to book multiple nights in a row, and sends you your results immediately so you
 	can have AI agents analyze them. There could be multiple tiers of fanciness, the top one nice
-	enough to be a good third date. Crucially, the lab’s data should be public, so anyone can compare
+	enough to be a third date. Crucially, the lab’s data should be public, so anyone can compare
 	their results against the full distribution of people who slept in the same conditions. Staying
 	anonymous could be allowed, though discouraged; publishing the data itself would be
 	non-negotiable.
@@ -37,17 +36,22 @@
 	A reason this is hard to make viable as a business today is insurance. Insurance companies are not
 	happy with skipping doctor referrals, booking multiple nights, or excess comfort. So this business
 	would need to eschew insurance entirely, which usually means serving only the rich, but the gap can 
-	be filled with philanthropic support.
+	be filled with philanthropic support. It seems like with AI-assisted monitoring, costs could go down 
+	to ~$500 a night in SF before losing money.
+</p>
+<p>
+	You could then add other biodata services like blood panels, MRIs, and genome sequencing into the same visit, 
+	turning the lab into a single place to track your whole biological profile over time.
 </p>
 
 <h2>Public data hospital</h2>
 <p>
 	A more brazen generalization of the public data sleep lab—a hospital that publicizes all of its
 	data by default: every scan, every diagnosis, every doctor recommendation, every declined patient,
-	every mistake. Protocols on GitHub. Ideally even video of every interaction.
+	every mistake. Protocols on GitHub. Ideally even livestreamed video of every interaction.
 </p>
 <p>
-	Patients can request their data be omitted, but they’re encouraged and maybe even incentivized to
+	Patients can request their data be censored, but they’re encouraged and maybe even incentivized to
 	let it be public. This would fix a lot of the information asymmetry problems in healthcare and
 	incentivize doctors to do what’s actually right, since eventually AI will be able to retroactively
 	look at their decisions and evaluate whether they were a good doctor. Ideally, doctor referrals
