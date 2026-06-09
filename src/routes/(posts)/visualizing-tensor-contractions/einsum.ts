@@ -214,11 +214,11 @@ interface Phase {
 	dur: number;
 }
 const PHASES: Phase[] = [
-	{ key: 'intro', dur: 0.1 },
-	{ key: 'squeeze', dur: 0.24 },
-	{ key: 'arrange', dur: 0.16 },
-	{ key: 'broadcast', dur: 0.2 },
-	{ key: 'resolve', dur: 0.3 }
+	{ key: 'intro', dur: 0.08 },
+	{ key: 'squeeze', dur: 0.22 },
+	{ key: 'arrange', dur: 0.15 },
+	{ key: 'broadcast', dur: 0.15 },
+	{ key: 'resolve', dur: 0.4 }
 ];
 
 function phaseBounds(key: string): [number, number] {
@@ -266,6 +266,7 @@ export interface Axis {
 }
 export interface MagState {
 	active: boolean;
+	label: string;
 	aDots: Dot[];
 	bDots: Dot[];
 	prodDots: Dot[];
@@ -329,6 +330,13 @@ export function sample(model: Model, progress: number): Scene {
 	const bcastRaw = localRaw(progress, 'broadcast');
 	const resolveRaw = localRaw(progress, 'resolve');
 	const phase = currentPhase(progress);
+
+	// Resolve happens for every cell at once, in three slow stages:
+	// reorient the perpendicular vectors parallel -> multiply -> sum.
+	const K = Math.max(model.K, 1);
+	const ro = smooth(clamp((resolveRaw - 0.08) / 0.34, 0, 1));
+	const mp = smooth(clamp((resolveRaw - 0.46) / 0.27, 0, 1));
+	const sm = smooth(clamp((resolveRaw - 0.76) / 0.24, 0, 1));
 
 	const squeezedOf = (op: 'a' | 'b') => (op === 'a' ? aSqueezed : bSqueezed);
 	const lettersOf = (op: 'a' | 'b') => (op === 'a' ? spec.a : spec.b);
@@ -420,27 +428,39 @@ export function sample(model: Model, progress: number): Scene {
 		});
 	}
 
-	// contributions: compressed vectors broadcast to each output cell
+	// contributions: compressed vectors broadcast to each output cell, then the
+	// same reorient -> multiply -> sum that the magnifier shows, run on every
+	// cell simultaneously.
 	const n = model.outCells.length;
+	const GRID_GAP = 5; // vertical separation of the two parallel rows in a cell
 	const inOpacity = smooth(bcastRaw / 0.45);
+	const parOff = (qi: number): Vec => ({ x: (qi - (K - 1) / 2) * MICRO, y: 0 });
 	if (inOpacity > 0.01) {
 		(['a', 'b'] as const).forEach((op) => {
 			const opLetters = lettersOf(op);
+			const opGap = op === 'a' ? -GRID_GAP : GRID_GAP;
 			model.outCells.forEach((cell, ci) => {
-				const sv = phase === 'resolve' ? clamp(resolveRaw * n - ci, 0, 1) : 0;
 				const center = outFramePoint(cell);
-				const opac = inOpacity * (1 - smooth(sv));
-				if (opac <= 0.01) return;
-				for (const q of model.contractCombos) {
+				model.contractCombos.forEach((q, qi) => {
 					// kept indices this operand reads from the cell + the contracted index
 					const merged: Idx = { ...q };
 					opLetters.forEach((l) => {
 						if (cell[l] !== undefined) merged[l] = cell[l];
 					});
-					const start = arrangedPos(op, merged);
-					const end = add(center, operandMicro(op, q));
-					const base = lerpV(start, end, broadcastT);
-					const pos = lerpV(base, center, smooth(sv));
+					const real = add(center, operandMicro(op, q)); // arrives in real orientation
+					let pos: Vec;
+					let opac: number;
+					if (phase === 'resolve') {
+						const par = add(add(center, parOff(qi)), { x: 0, y: opGap });
+						const re = lerpV(real, par, ro);
+						pos = lerpV(re, add(center, parOff(qi)), mp);
+						opac = 1 - mp;
+					} else {
+						const start = arrangedPos(op, merged);
+						pos = lerpV(start, real, broadcastT);
+						opac = inOpacity;
+					}
+					if (opac <= 0.01) return;
 					dots.push({
 						key: `c-${op}-${ci}-${keyOf(q)}`,
 						x: pos.x,
@@ -449,32 +469,37 @@ export function sample(model: Model, progress: number): Scene {
 						opacity: opac,
 						fill: DOT_GRAY
 					});
-				}
+				});
 			});
 		});
 	}
 
-	// result dots: appear as the magnifier sweep passes each cell
+	// product dots (during multiply) collapsing into the result dot (during sum)
 	if (phase === 'resolve') {
 		model.outCells.forEach((cell, ci) => {
-			const sv = clamp(resolveRaw * n - ci, 0, 1);
-			const o = smooth(sv);
-			if (o <= 0.01) return;
-			const c = outFramePoint(cell);
-			dots.push({ key: `r-${ci}`, x: c.x, y: c.y, r: 4, opacity: o, fill: RESULT_GRAY });
+			const center = outFramePoint(cell);
+			model.contractCombos.forEach((q, qi) => {
+				const o = mp * (1 - sm);
+				if (o <= 0.01) return;
+				const px = lerp(center.x + parOff(qi).x, center.x, sm);
+				dots.push({ key: `p-${ci}-${qi}`, x: px, y: center.y, r: 3, opacity: o, fill: '#9a9aa0' });
+			});
+			const o = smooth(sm);
+			if (o > 0.01)
+				dots.push({ key: `r-${ci}`, x: center.x, y: center.y, r: 4, opacity: o, fill: RESULT_GRAY });
 		});
 	}
 
-	// highlight ring on the focused output cell
+	// highlight ring on the representative cell that the zoom is showing (0,0)
+	const repIdx = 0;
 	let highlight: Scene['highlight'] = null;
-	if (phase === 'resolve' && n > 1) {
-		const fi = clamp(Math.floor(resolveRaw * n), 0, n - 1);
-		const c = outFramePoint(model.outCells[fi]);
-		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.5 };
+	if ((phase === 'resolve' || phase === 'broadcast') && n > 1) {
+		const c = outFramePoint(model.outCells[repIdx]);
+		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 };
 	}
 
-	// --- magnifier ---
-	const mag = sampleMag(model, progress, resolveRaw, phase, bcastRaw);
+	// --- magnifier --- (same reorient -> multiply -> sum, zoomed in)
+	const mag = sampleMag(model, repIdx, ro, mp, sm, bcastRaw > 0.01 || phase === 'resolve');
 
 	// --- caption ---
 	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
@@ -510,62 +535,67 @@ function captionFor(
 
 function sampleMag(
 	model: Model,
-	progress: number,
-	resolveRaw: number,
-	phase: string,
-	bcastRaw: number
+	repIdx: number,
+	ro: number,
+	mp: number,
+	sm: number,
+	active: boolean
 ): MagState {
-	const active = bcastRaw > 0.01 || phase === 'resolve';
-	if (!active) return { active: false, aDots: [], bDots: [], prodDots: [], sumDot: null };
+	if (!active)
+		return { active: false, label: '', aDots: [], bDots: [], prodDots: [], sumDot: null };
 
 	const K = Math.max(model.K, 1);
-	const n = model.outCells.length;
-	let s = 0;
-	if (phase === 'resolve') {
-		const fi = clamp(Math.floor(resolveRaw * n), 0, n - 1);
-		s = clamp(resolveRaw * n - fi, 0, 1);
-	}
+	const cell = model.outCells[repIdx] ?? {};
+	const label = model.spec.out.length
+		? model.spec.out.map((l) => `${l}=${cell[l] ?? 0}`).join('  ')
+		: 'scalar';
 
 	const cColor = model.contracted.length
 		? (model.colors.get(model.contracted[0]) as string)
 		: '#9aa0a6';
 
-	const cx = MAG.w / 2;
-	const mx = Math.min(22, (MAG.w - 36) / Math.max(K, 1));
-	const xFor = (i: number) => cx - ((K - 1) / 2) * mx + i * mx;
-	const yA0 = 50;
-	const yB0 = 150;
-	const yA1 = 82;
-	const yB1 = 118;
-	const yMid = 100;
+	// Each operand's compressed vector keeps the screen orientation of its own
+	// contracted axis, so two vectors that were perpendicular in the grid start
+	// out perpendicular here too. They then rotate to a common direction before
+	// the element-wise multiply.
+	const slotA = model.contracted.length ? model.spec.a.indexOf(model.contracted[0]) : 1;
+	const slotB = model.contracted.length ? model.spec.b.indexOf(model.contracted[0]) : 1;
+	const dirA = unit(DIRS[slotA] ?? { x: 1, y: 0 });
+	const dirB = unit(DIRS[slotB] ?? { x: 1, y: 0 });
 
-	const al = smooth(clamp(s / 0.35, 0, 1));
-	const ml = smooth(clamp((s - 0.35) / 0.3, 0, 1));
-	const sm = smooth(clamp((s - 0.65) / 0.35, 0, 1));
+	const cx = MAG.w / 2;
+	const cy = 102;
+	const mx = Math.min(24, (MAG.w - 44) / Math.max(K, 1));
+	const off = (i: number) => (i - (K - 1) / 2) * mx;
+	const rowGap = 18;
 
 	const aDots: Dot[] = [];
 	const bDots: Dot[] = [];
 	const prodDots: Dot[] = [];
 	for (let i = 0; i < K; i++) {
-		const x = xFor(i);
-		let ay = lerp(yA0, yA1, al);
-		let by = lerp(yB0, yB1, al);
-		ay = lerp(ay, yMid, ml);
-		by = lerp(by, yMid, ml);
-		const fade = 1 - ml;
-		aDots.push({ key: `ma-${i}`, x, y: ay, r: 4, opacity: fade, fill: cColor });
-		bDots.push({ key: `mb-${i}`, x, y: by, r: 4, opacity: fade, fill: cColor });
-		const px = lerp(x, cx, sm);
+		const aStart: Vec = { x: cx + dirA.x * off(i), y: cy + dirA.y * off(i) };
+		const aPar: Vec = { x: cx + off(i), y: cy - rowGap };
+		let a = lerpV(aStart, aPar, ro);
+		a = lerpV(a, { x: cx + off(i), y: cy }, mp);
+		aDots.push({ key: `ma-${i}`, x: a.x, y: a.y, r: 4, opacity: 1 - mp, fill: cColor });
+
+		const bStart: Vec = { x: cx + dirB.x * off(i), y: cy + dirB.y * off(i) };
+		const bPar: Vec = { x: cx + off(i), y: cy + rowGap };
+		let b = lerpV(bStart, bPar, ro);
+		b = lerpV(b, { x: cx + off(i), y: cy }, mp);
+		bDots.push({ key: `mb-${i}`, x: b.x, y: b.y, r: 4, opacity: 1 - mp, fill: cColor });
+
+		const px = lerp(cx + off(i), cx, sm);
 		prodDots.push({
 			key: `mp-${i}`,
 			x: px,
-			y: yMid,
+			y: cy,
 			r: 4,
-			opacity: ml * (1 - sm),
+			opacity: mp * (1 - sm),
 			fill: '#6b7280'
 		});
 	}
-	const sumDot: Dot = { key: 'msum', x: cx, y: yMid, r: 6, opacity: sm, fill: '#403e43' };
+	const sumDot: Dot = { key: 'msum', x: cx, y: cy, r: 6, opacity: sm, fill: '#403e43' };
 
-	return { active: true, aDots, bDots, prodDots, sumDot };
+	return { active: true, label, aDots, bDots, prodDots, sumDot };
 }

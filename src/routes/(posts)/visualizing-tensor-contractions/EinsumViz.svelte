@@ -135,16 +135,24 @@
 			{/each}
 		</svg>
 
-		{#if scene.mag.active}
-			<svg
-				class="mag"
-				viewBox={`0 0 ${MAG.w} ${MAG.h}`}
-				preserveAspectRatio="xMidYMid meet"
-				role="img"
-				aria-label="dot product detail"
-			>
-				<text x={MAG.w / 2} y="22" fill="#86848a" font-size="11" text-anchor="middle"
-					>one output cell</text
+		<svg
+			class="mag"
+			viewBox={`0 0 ${MAG.w} ${MAG.h}`}
+			preserveAspectRatio="xMidYMid meet"
+			role="img"
+			aria-label="dot product detail"
+		>
+			{#if scene.mag.active}
+				<text x={MAG.w / 2} y="20" fill="#86848a" font-size="10" text-anchor="middle"
+					>zoom: output cell</text
+				>
+				<text
+					x={MAG.w / 2}
+					y="38"
+					fill="#403e43"
+					font-size="13"
+					font-style="italic"
+					text-anchor="middle">{scene.mag.label}</text
 				>
 				{#each scene.mag.aDots as d (d.key)}
 					<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
@@ -164,8 +172,8 @@
 						opacity={scene.mag.sumDot.opacity}
 					/>
 				{/if}
-			</svg>
-		{/if}
+			{/if}
+		</svg>
 	</div>
 
 	<div class="caption">{scene.caption}</div>
