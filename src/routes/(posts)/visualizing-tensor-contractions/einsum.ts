@@ -27,6 +27,7 @@ export const PRESETS: Preset[] = [
 	{ label: 'dot product', expr: 'i,i->' },
 	{ label: 'outer product', expr: 'i,j->ij' },
 	{ label: 'hadamard', expr: 'ij,ij->ij' },
+	{ label: 'sum of all products', expr: 'ij,ij->' },
 	{ label: 'reduction', expr: 'ij,jk->k' },
 	{ label: 'rank-3', expr: 'ijk,ikl->ijl' }
 ];
