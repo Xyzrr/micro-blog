@@ -71,6 +71,11 @@
 	score for every pair of tokens," and the animation builds precisely that grid.
 </p>
 <p>
+	In code you'd usually write this as <code>Q @ K.T</code>, a transpose and then a matmul. But thinking
+	of it as two operations is misleading. The transpose exists because matmul wants the summed axis in a particular
+	place, but that rule isn't really relevant here. It's more natural to think of this as one operation, just contracting an axis.
+</p>
+<p>
 	The second half of attention uses those scores to mix the <em>value</em> vectors. Each output token
 	is a weighted blend of all the value vectors, weighted by how much that query attends to each key.
 	That's another contraction, this time over the key positions <em>j</em>, <code>ij,jd-&gt;id</code>:
