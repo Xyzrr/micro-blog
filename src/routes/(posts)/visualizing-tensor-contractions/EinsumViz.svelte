@@ -1,315 +1,201 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import { buildModel, sample, VIEW, MAG } from './einsum';
+	import { onMount } from 'svelte';
+	import { parseEinsum, type EinsumSpec } from './einsum';
+	import { buildScene, sampleTrack, letterColors, type El, type Scene } from './timeline';
 
-	export let expr = 'ij,jk->ik';
-	export let labels: Record<string, string> = {};
-	export let vectors = '';
+	export let initial = 'ij,jk->ik';
 
-	const DURATION = 15000; // ms for a full play-through
+	const PRESETS = [
+		{ label: 'matrix × matrix', src: 'ij,jk->ik' },
+		{ label: 'matrix × vector', src: 'ij,j->i' },
+		{ label: 'dot product', src: 'i,i->' },
+		{ label: 'outer product', src: 'i,j->ij' },
+		{ label: 'elementwise product', src: 'i,i->i' },
+		{ label: 'batched matmul', src: 'bij,bjk->bik' },
+		{ label: 'matmul, B transposed', src: 'ij,kj->ik' },
+		{ label: 'sum of all products', src: 'ij,ij->' }
+	];
 
-	let progress = 0;
+	let src = initial;
+	let error = '';
+	let spec: EinsumSpec = parseEinsum(initial);
+	let scene: Scene = buildScene(spec);
+	let time = 0;
 	let playing = false;
-	let userPaused = false;
-	let raf = 0;
-	let last: number | null = null;
-	let container: HTMLDivElement;
 
-	$: model = buildModel(expr);
-	$: scene = sample(model, progress, labels, vectors);
-	$: uid = expr.replace(/[^a-z0-9]/gi, '_');
+	$: cols = letterColors(spec);
+	$: phase =
+		scene.phases.find((p) => time >= p.t0 && time < p.t1) ??
+		scene.phases[scene.phases.length - 1];
 
-	function frame(t: number) {
-		if (last === null) last = t;
-		const dt = t - last;
-		last = t;
-		if (playing) {
-			progress += dt / DURATION;
-			if (progress >= 1) {
-				progress = 1;
-				playing = false;
-			}
+	// time is passed explicitly so Svelte sees the template's dependency on it
+	function g(el: El, ch: string, t: number): number {
+		const tr = el.tracks[ch];
+		return tr && tr.length ? sampleTrack(tr, t) : 0;
+	}
+
+	function apply(s: string) {
+		try {
+			spec = parseEinsum(s);
+			scene = buildScene(spec);
+			src = s;
+			error = '';
+			time = 0;
+			playing = true;
+		} catch (e) {
+			error = e instanceof Error ? e.message : String(e);
 		}
-		raf = requestAnimationFrame(frame);
+	}
+
+	function onInput(e: Event) {
+		src = (e.currentTarget as HTMLInputElement).value;
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') apply(src);
+	}
+
+	function onPreset(e: Event) {
+		const v = (e.currentTarget as HTMLSelectElement).value;
+		if (v) apply(v);
+		(e.currentTarget as HTMLSelectElement).value = '';
+	}
+
+	function onScrub(e: Event) {
+		time = +(e.currentTarget as HTMLInputElement).value;
+		playing = false;
+	}
+
+	function togglePlay() {
+		if (!playing && time >= scene.duration - 0.01) time = 0;
+		playing = !playing;
+	}
+
+	function jumpTo(t0: number) {
+		time = t0 + 0.001;
+		playing = true;
 	}
 
 	onMount(() => {
-		raf = requestAnimationFrame(frame);
-		const io = new IntersectionObserver(
-			(entries) => {
-				for (const e of entries) {
-					if (e.isIntersecting) {
-						if (!userPaused && progress < 1) {
-							playing = true;
-							last = null;
-						}
-					} else {
-						playing = false;
-					}
-				}
-			},
-			{ threshold: 0.35 }
-		);
-		if (container) io.observe(container);
-		return () => io.disconnect();
-	});
-	onDestroy(() => {
-		if (raf) cancelAnimationFrame(raf);
-	});
-
-	function play() {
-		userPaused = false;
-		if (progress >= 1) progress = 0;
+		let raf = 0;
+		let lastTs = 0;
+		const tick = (ts: number) => {
+			if (playing) {
+				if (lastTs) time = Math.min(time + Math.min(0.05, (ts - lastTs) / 1000), scene.duration);
+				if (time >= scene.duration) playing = false;
+			}
+			lastTs = ts;
+			raf = requestAnimationFrame(tick);
+		};
 		playing = true;
-		last = null;
-	}
-	function pause() {
-		userPaused = true;
-		playing = false;
-	}
-	function restart() {
-		userPaused = false;
-		progress = 0;
-		playing = true;
-		last = null;
-	}
-	function scrub(e: Event) {
-		playing = false;
-		userPaused = true;
-		progress = +(e.target as HTMLInputElement).value;
-	}
+		raf = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(raf);
+	});
 </script>
 
-<div class="viz" bind:this={container}>
-	<div class="stage">
-		<svg
-			class="main"
-			viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
-			preserveAspectRatio="xMidYMid meet"
-			role="img"
-			aria-label={`einsum ${expr}`}
-		>
-			<defs>
-				{#each [...model.colors] as [letter, color]}
-					<marker
-						id={`arrow-${uid}-${letter}`}
-						markerWidth="6"
-						markerHeight="6"
-						refX="4"
-						refY="3"
-						orient="auto"
-					>
-						<path d="M0,0 L6,3 L0,6 Z" fill={color} />
-					</marker>
-				{/each}
-			</defs>
-
-			{#each scene.axes as ax (ax.key)}
-				<line
-					x1={ax.x1}
-					y1={ax.y1}
-					x2={ax.x2}
-					y2={ax.y2}
-					stroke={ax.color}
-					stroke-width="2"
-					stroke-linecap="round"
-					opacity={ax.opacity}
-					marker-end={`url(#arrow-${uid}-${ax.letter})`}
-				/>
-				<text
-					x={ax.lx}
-					y={ax.ly}
-					fill={ax.color}
-					opacity={ax.opacity}
-					font-size={ax.label.length > 2 ? 11 : 13}
-					font-style="italic"
-					text-anchor="middle"
-					dominant-baseline="middle">{ax.label}</text
-				>
-			{/each}
-
-			{#each scene.vectorLines as v (v.key)}
-				<line
-					x1={v.x1}
-					y1={v.y1}
-					x2={v.x2}
-					y2={v.y2}
-					stroke={v.color}
-					stroke-width="6"
-					stroke-linecap="round"
-					opacity={v.opacity}
-				/>
-			{/each}
-
-			{#if scene.highlight}
-				<circle
-					cx={scene.highlight.x}
-					cy={scene.highlight.y}
-					r={scene.highlight.r}
-					fill="none"
-					stroke="#403e43"
-					stroke-width="1.5"
-					opacity={scene.highlight.opacity}
-				/>
-			{/if}
-
-			{#each scene.dots as d (d.key)}
-				<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-			{/each}
-		</svg>
-
-		<svg
-			class="mag"
-			viewBox={`0 0 ${MAG.w} ${MAG.h}`}
-			preserveAspectRatio="xMidYMid meet"
-			role="img"
-			aria-label="dot product detail"
-		>
-			<defs>
-				<clipPath id={`lens-${uid}`}>
-					<circle cx={MAG.w / 2} cy="95" r="72" />
-				</clipPath>
-			</defs>
-			{#if scene.mag.active}
-				<circle cx={MAG.w / 2} cy="95" r="72" fill="rgb(247, 247, 248)" />
-				<g clip-path={`url(#lens-${uid})`}>
-					{#each scene.mag.aDots as d (d.key)}
-						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-					{/each}
-					{#each scene.mag.bDots as d (d.key)}
-						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-					{/each}
-					{#each scene.mag.prodDots as d (d.key)}
-						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-					{/each}
-					{#if scene.mag.sumDot}
-						<circle
-							cx={scene.mag.sumDot.x}
-							cy={scene.mag.sumDot.y}
-							r={scene.mag.sumDot.r}
-							fill={scene.mag.sumDot.fill}
-							opacity={scene.mag.sumDot.opacity}
-						/>
-					{/if}
-				</g>
-				<circle
-					cx={MAG.w / 2}
-					cy="95"
-					r="72"
-					fill="none"
-					stroke="#403e43"
-					stroke-width="1.5"
-					opacity="0.5"
-				/>
-				<text
-					x={MAG.w / 2}
-					y="188"
-					fill="#403e43"
-					font-size="12"
-					font-style="italic"
-					text-anchor="middle">{scene.mag.label}</text
-				>
-			{/if}
-		</svg>
-	</div>
-
-	<div class="caption">{scene.caption}</div>
-
-	<div class="controls">
-		{#if playing}
-			<button class="ctrl" on:click={pause} aria-label="Pause">
-				<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-					><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg
-				>
-			</button>
-		{:else}
-			<button class="ctrl" on:click={play} aria-label="Play">
-				<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-					><path d="M7 5v14l12-7z" /></svg
-				>
-			</button>
-		{/if}
-		<button class="ctrl" on:click={restart} aria-label="Restart">
-			<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-				><path d="M12 5V2L7 7l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z" /></svg
-			>
-		</button>
+<div class="my-6 rounded-lg border border-[#dcdce0] bg-white p-3 sm:p-4">
+	<div class="flex flex-wrap items-center gap-2 text-sm">
 		<input
-			class="scrub"
-			type="range"
-			min="0"
-			max="1"
-			step="0.001"
-			value={progress}
-			on:input={scrub}
-			aria-label="Timeline"
+			class="w-32 rounded border border-[#c9c9ce] bg-[#fafafa] px-2 py-1 font-mono text-[14px] focus:outline-none focus:border-[#8a8a92]"
+			value={src}
+			spellcheck="false"
+			on:input={onInput}
+			on:keydown={onKeydown}
 		/>
+		<button
+			class="rounded border border-[#c9c9ce] px-2 py-1 hover:bg-[#f1f1f3]"
+			on:click={() => apply(src)}>go</button
+		>
+		<select
+			class="rounded border border-[#c9c9ce] bg-white px-1 py-1 text-sm"
+			on:change={onPreset}
+		>
+			<option value="">presets…</option>
+			{#each PRESETS as p}
+				<option value={p.src}>{p.label} — {p.src}</option>
+			{/each}
+		</select>
+		<button
+			class="ml-auto rounded border border-[#c9c9ce] px-2 py-1 hover:bg-[#f1f1f3]"
+			on:click={togglePlay}>{playing ? 'pause' : time >= scene.duration - 0.01 ? 'replay' : 'play'}</button
+		>
 	</div>
-</div>
+	{#if error}
+		<div class="mt-1 text-sm text-[#b4452e]">{error}</div>
+	{/if}
 
-<style>
-	.viz {
-		margin: 24px 0;
-		padding: 14px 0;
-	}
-	.stage {
-		display: flex;
-		align-items: stretch;
-		gap: 8px;
-	}
-	.main {
-		flex: 1 1 auto;
-		min-width: 0;
-		height: 280px;
-	}
-	.mag {
-		flex: 0 0 140px;
-		width: 140px;
-		height: 280px;
-	}
-	.caption {
-		margin-top: 8px;
-		font-size: 13px;
-		color: rgb(100, 98, 103);
-		min-height: 20px;
-		text-align: center;
-	}
-	.controls {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-top: 8px;
-	}
-	.ctrl {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 999px;
-		border: 1px solid rgb(210, 208, 213);
-		background: rgb(248, 248, 249);
-		color: rgb(80, 78, 83);
-		cursor: pointer;
-	}
-	.ctrl:hover {
-		border-color: rgb(150, 148, 153);
-	}
-	.scrub {
-		flex: 1;
-		accent-color: rgb(99, 102, 241);
-	}
-	@media (max-width: 520px) {
-		.stage {
-			flex-direction: column;
-		}
-		.mag {
-			flex: 0 0 170px;
-			width: 100%;
-			height: 170px;
-		}
-		.main {
-			height: 240px;
-		}
-	}
-</style>
+	<div class="mt-2 text-center font-mono text-[16px] tracking-wide">
+		{#each spec.inputs[0] as L}<span style="color:{cols[L]}">{L}</span>{/each}<span
+			class="opacity-40">,</span
+		>{#each spec.inputs[1] as L}<span style="color:{cols[L]}">{L}</span>{/each}<span
+			class="opacity-40"
+		>
+			→
+		</span>{#each spec.output as L}<span style="color:{cols[L]}">{L}</span>{/each}{#if !spec.output.length}<span
+			class="text-sm italic opacity-40">scalar</span
+		>{/if}
+	</div>
+
+	<svg viewBox="0 0 690 340" class="w-full select-none">
+		{#each scene.els as el}
+			{#if el.kind === 'dot'}
+				<circle cx={g(el, 'x', time)} cy={g(el, 'y', time)} r={g(el, 'r', time)} fill={el.color} opacity={g(el, 'o', time)} />
+			{:else if el.kind === 'line'}
+				<line
+					x1={g(el, 'x1', time)}
+					y1={g(el, 'y1', time)}
+					x2={g(el, 'x2', time)}
+					y2={g(el, 'y2', time)}
+					stroke={el.color}
+					stroke-width={el.w ?? 2.5}
+					stroke-linecap="round"
+					stroke-dasharray={el.dash ?? 'none'}
+					opacity={g(el, 'o', time)}
+				/>
+			{:else if el.kind === 'label'}
+				<text
+					x={g(el, 'x', time)}
+					y={g(el, 'y', time)}
+					fill={el.color}
+					font-size={el.fs ?? 13}
+					font-weight="600"
+					text-anchor="middle"
+					dominant-baseline="middle"
+					opacity={g(el, 'o', time)}>{el.text}</text
+				>
+			{:else if el.kind === 'rect'}
+				<rect
+					x={el.x}
+					y={el.y}
+					width={el.wd}
+					height={el.ht}
+					rx={el.rx ?? 6}
+					fill={el.fill ?? 'none'}
+					stroke={el.color}
+					opacity={g(el, 'o', time)}
+				/>
+			{/if}
+		{/each}
+	</svg>
+
+	<input
+		type="range"
+		min="0"
+		max={scene.duration}
+		step="0.01"
+		value={time}
+		on:input={onScrub}
+		class="w-full accent-[#6b7280]"
+	/>
+	<div class="mt-1 flex flex-wrap items-center gap-1">
+		{#each scene.phases as p}
+			<button
+				class="rounded px-2 py-0.5 text-xs {p === phase
+					? 'bg-[#403e43] text-white'
+					: 'bg-[#eeeef0] text-[#646267] hover:bg-[#e2e2e6]'}"
+				on:click={() => jumpTo(p.t0)}>{p.label}</button
+			>
+		{/each}
+	</div>
+	<div class="mt-2 min-h-[40px] text-sm opacity-70">{phase.desc}</div>
+</div>
