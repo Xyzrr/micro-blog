@@ -11,7 +11,7 @@
 	let draft = expr;
 	let error = '';
 
-	const DURATION = 15000; // ms for a full play-through
+	const DURATION = 11000; // ms for a full play-through
 
 	let progress = 0;
 	let playing = false;
@@ -224,6 +224,28 @@
 			{#if scene.mag.active}
 				<circle cx={MAG.w / 2} cy="95" r="72" fill="rgb(247, 247, 248)" />
 				<g clip-path={`url(#lens-${uid})`}>
+					{#each scene.mag.axes as ax (ax.key)}
+						<line
+							x1={ax.x1}
+							y1={ax.y1}
+							x2={ax.x2}
+							y2={ax.y2}
+							stroke={ax.color}
+							stroke-width="2"
+							stroke-linecap="round"
+							opacity={ax.opacity}
+						/>
+						<text
+							x={ax.lx}
+							y={ax.ly}
+							fill={ax.color}
+							opacity={ax.opacity}
+							font-size="10"
+							font-style="italic"
+							text-anchor="middle"
+							dominant-baseline="middle">{ax.letter}</text
+						>
+					{/each}
 					{#each scene.mag.aDots as d (d.key)}
 						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
 					{/each}
