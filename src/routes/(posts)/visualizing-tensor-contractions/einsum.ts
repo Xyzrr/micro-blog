@@ -42,10 +42,10 @@ const DIRS: Vec[] = [
 	{ x: 0.55, y: -0.42 }
 ];
 
-export const VIEW = { w: 640, h: 300 };
+export const VIEW = { w: 640, h: 260 };
 // The zoom lens lives in the same SVG as the main view, so the dashed guide
 // lines can run from the highlighted cell straight to the lens.
-export const LENS = { x: 545, y: 95, r: 72 };
+export const LENS = { x: 545, y: 100, r: 72 };
 
 const SIZE_MAP: Record<string, number> = {
 	i: 3,
@@ -233,9 +233,9 @@ export function buildModel(raw: string): Model {
 		contracted,
 		aSqueezed,
 		bSqueezed,
-		aIn: centerOrigin({ x: 110, y: 150 }, spec.a),
-		bIn: centerOrigin({ x: 320, y: 150 }, spec.b),
-		outOrigin: centerOrigin({ x: 210, y: 150 }, spec.out),
+		aIn: centerOrigin({ x: 110, y: 130 }, spec.a),
+		bIn: centerOrigin({ x: 320, y: 130 }, spec.b),
+		outOrigin: centerOrigin({ x: 210, y: 130 }, spec.out),
 		aDots: combos(spec.a),
 		bDots: combos(spec.b),
 		outCells: combos(spec.out),
@@ -438,9 +438,10 @@ export function sample(
 	const resolveRaw = localRaw(progress, 'resolve');
 	const phase = currentPhase(progress);
 
-	// Resolve happens for every cell at once: align the piles -> multiply -> sum.
+	// Resolve happens for every cell at once: collapse solo sums -> align the
+	// piles -> multiply -> sum.
 	const K = Math.max(model.K, 1);
-	const { ro, mp, sm } = resolveStages(model, resolveRaw);
+	const { cl, ro, mp, sm } = resolveStages(model, resolveRaw);
 
 	const squeezedOf = (op: 'a' | 'b') => (op === 'a' ? aSqueezed : bSqueezed);
 	const lettersOf = (op: 'a' | 'b') => (op === 'a' ? spec.a : spec.b);
@@ -599,9 +600,10 @@ export function sample(
 		}
 	}
 
-	// contributions: compressed vectors broadcast to each output cell, then the
-	// same reorient -> multiply -> sum that the magnifier shows, run on every
-	// cell simultaneously.
+	// contributions: each operand's compressed pile — with its full structure,
+	// contracted AND solo-summed axes — is broadcast to each output cell, then
+	// runs the same collapse -> align -> multiply -> sum the magnifier shows,
+	// on every cell simultaneously.
 	const GRID_GAP = 5; // vertical separation of the two parallel rows in a cell
 	const inOpacity = smooth(bcastRaw / 0.45);
 	const parOff = (qi: number): Vec => ({ x: (qi - (K - 1) / 2) * MICRO, y: 0 });
@@ -612,6 +614,11 @@ export function sample(
 			// the two piles sit diagonally offset within a cell rather than both
 			// centered on it, so they read as two arrivals instead of one cross
 			const sideOff: Vec = op === 'a' ? { x: -5, y: -3.4 } : { x: 5, y: 3.4 };
+			const squeezed = squeezedOf(op);
+			const solo = squeezed.filter((l) => !contracted.includes(l));
+			const pileCombos = combos(squeezed);
+			// row slot of a pile dot's contracted part, for the multiply layout
+			const qIndex = new Map(model.contractCombos.map((q, i) => [keyOf(q), i]));
 			// stagger copies so they sweep across the grid along the directions
 			// this operand broadcasts over, instead of all arriving at once
 			const lacks = lacksOf(op);
@@ -621,19 +628,26 @@ export function sample(
 				const stag = stagDen ? lacks.reduce((s, l) => s + (cell[l] ?? 0), 0) / stagDen : 0;
 				const tCell = easeInOut(clamp((bcastRaw - 0.35 * stag) / 0.6, 0, 1));
 				const cellFade = depthFade(spec.out, cell);
-				model.contractCombos.forEach((q, qi) => {
-					// kept indices this operand reads from the cell + the contracted index
-					const merged: Idx = { ...q };
+				pileCombos.forEach((pix) => {
+					// kept indices this operand reads from the cell + its pile indices
+					const merged: Idx = { ...pix };
 					opLetters.forEach((l) => {
 						if (cell[l] !== undefined) merged[l] = cell[l];
 					});
-					const real = add(add(center, sideOff), operandMicro(op, q)); // real orientation
+					const qPart: Idx = {};
+					contracted.forEach((l) => (qPart[l] = pix[l] ?? 0));
+					const qi = qIndex.get(keyOf(qPart)) ?? 0;
+					const real = add(add(center, sideOff), operandMicro(op, pix)); // real orientation
 					let pos: Vec;
 					let opac: number;
 					if (phase === 'resolve') {
+						const soloCentered: Idx = { ...pix };
+						for (const l of solo) soloCentered[l] = (sizeOf(l) - 1) / 2;
+						const collapsed = add(add(center, sideOff), operandMicro(op, soloCentered));
 						const par = add(add(center, parOff(qi)), { x: 0, y: opGap });
-						const re = lerpV(real, par, ro);
-						pos = lerpV(re, add(center, parOff(qi)), mp);
+						let p = lerpV(real, collapsed, cl);
+						p = lerpV(p, par, ro);
+						pos = lerpV(p, add(center, parOff(qi)), mp);
 						opac = (1 - mp) * cellFade;
 					} else {
 						const start = arrangedPos(op, merged);
@@ -642,7 +656,7 @@ export function sample(
 					}
 					if (opac <= 0.01) return;
 					dots.push({
-						key: `c-${op}-${ci}-${keyOf(q)}`,
+						key: `c-${op}-${ci}-${keyOf(pix)}`,
 						x: pos.x,
 						y: pos.y,
 						r: 2.5,
@@ -704,53 +718,61 @@ export function sample(
 	// --- magnifier --- (the same ritual, zoomed in with the piles' true structure)
 	const mag = sampleMag(
 		model,
-		repIdx,
 		resolveRaw,
 		smooth(bcastRaw / 0.5),
-		bcastRaw > 0.01 || phase === 'resolve',
-		labelOf
+		bcastRaw > 0.01 || phase === 'resolve'
 	);
 
 	// --- caption ---
-	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
+	const caption = captionFor(phase, model);
 
 	return { phase, caption, axes, vectorLines, dots, highlight, connectors, mag };
 }
 
-function captionFor(
-	phase: string,
-	contracted: string[],
-	aSqueezed: string[],
-	bSqueezed: string[]
-): string {
+function captionFor(phase: string, model: Model): string {
+	const { contracted, aSqueezed, bSqueezed } = model;
+	const solo = [...aSqueezed, ...bSqueezed].filter((l) => !contracted.includes(l));
+	const cells = model.outCells.length;
 	switch (phase) {
 		case 'intro':
 			return 'Two tensors. The axes carry the meaning; the gray dots are just numbers.';
 		case 'squeeze':
-			if (contracted.length) return `Contract ${contracted.join('')}: squeeze that axis away.`;
-			if (aSqueezed.length || bSqueezed.length) return 'Reduce the summed-away axes.';
-			return 'Nothing to contract here.';
+			if (contracted.length && solo.length)
+				return `Contract ${contracted.join(', ')}; ${solo.join(
+					', '
+				)} appears in only one input, so it simply sums away.`;
+			if (contracted.length)
+				return `Contract ${contracted.join(
+					', '
+				)}: squeeze the axis away. Its dots survive as little piles.`;
+			if (solo.length)
+				return `${solo.join(', ')} doesn't appear in the output, so it sums away into a pile.`;
+			return 'Nothing to contract here — every axis survives.';
 		case 'arrange':
-			return 'Arrange the surviving axes into the output frame.';
+			return model.spec.out.length
+				? 'Arrange the surviving axes into the output frame.'
+				: 'No axes survive — the output will be a single number.';
 		case 'broadcast':
-			return 'Copy each compressed vector out to every output cell.';
-		case 'resolve':
-			return contracted.length
-				? 'At each cell, take the dot product along the contracted axis.'
-				: 'At each cell, multiply the values together.';
+			return cells > 1
+				? 'Each compressed pile is copied out to every output cell it feeds.'
+				: 'Both compressed piles head to the single output cell.';
+		case 'resolve': {
+			const at = cells > 1 ? 'At every cell, ' : '';
+			const body =
+				!contracted.length && !solo.length
+					? 'multiply the two values together.'
+					: contracted.length === 1 && !solo.length
+					? `the two piles line up for a dot product along ${contracted[0]}.`
+					: 'the piles line up, multiply pairwise, and sum into a single entry.';
+			const s = at + body;
+			return s.charAt(0).toUpperCase() + s.slice(1);
+		}
 		default:
 			return '';
 	}
 }
 
-function sampleMag(
-	model: Model,
-	repIdx: number,
-	resolveRaw: number,
-	arrivalT: number,
-	active: boolean,
-	labelOf: (l: string) => string
-): MagState {
+function sampleMag(model: Model, resolveRaw: number, arrivalT: number, active: boolean): MagState {
 	if (!active)
 		return {
 			active: false,
@@ -764,10 +786,8 @@ function sampleMag(
 		};
 
 	const { spec, colors, contracted } = model;
-	const cell = model.outCells[repIdx] ?? {};
-	const label = spec.out.length
-		? spec.out.map((l) => `${labelOf(l)} ${cell[l] ?? 0}`).join(',  ')
-		: 'scalar';
+	// the lens zooms one cell, but the same thing happens everywhere at once
+	const label = model.outCells.length > 1 ? 'happening at every cell' : 'the single output value';
 
 	const { cl, ro, mp, sm } = resolveStages(model, resolveRaw);
 

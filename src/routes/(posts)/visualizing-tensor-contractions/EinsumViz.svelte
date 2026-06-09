@@ -132,7 +132,18 @@
 			<div class="error">{error}</div>
 		{/if}
 	{/if}
-	<div class="stage">
+	<div class="expr" aria-hidden="true">
+		{#each model.spec.a as l}<span style={`color:${model.colors.get(l)}`}>{l}</span>{/each}<span
+			class="dim">,</span
+		>{#each model.spec.b as l}<span style={`color:${model.colors.get(l)}`}>{l}</span>{/each}<span
+			class="dim"
+		>
+			&rarr;
+		</span>{#if model.spec.out.length}{#each model.spec.out as l}<span
+				style={`color:${model.colors.get(l)}`}>{l}</span
+			>{/each}{:else}<span class="dim scalar">scalar</span>{/if}
+	</div>
+	<div>
 		<svg
 			class="main"
 			viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
@@ -352,6 +363,20 @@
 		display: block;
 		width: 100%;
 		height: auto;
+	}
+	.expr {
+		text-align: center;
+		font-family: 'Inconsolata', monospace;
+		font-size: 15px;
+		letter-spacing: 0.5px;
+		margin-bottom: 2px;
+	}
+	.expr .dim {
+		color: rgb(165, 163, 168);
+	}
+	.expr .scalar {
+		font-style: italic;
+		font-size: 13px;
 	}
 	.caption {
 		margin-top: 8px;

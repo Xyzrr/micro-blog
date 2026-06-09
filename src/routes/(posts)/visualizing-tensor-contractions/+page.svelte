@@ -99,7 +99,7 @@
 <p>
 	I'm frankly not sure whether this animation is helpful for many people, it might be only for unusually animation-driven brains.
 	But I find that it leads to much more correct intuitions on the ways you manipulate tensors. The rotate-and-slide matmul visual
-	makes me think that matrices are things that you often want to rotate. But in fact, you almost never rotate matrices. Tranposing
+	makes me think that matrices are things that you often want to rotate. But in fact, you almost never rotate matrices. Transposing
 	is a much more common operation, and I think transposing feels more natural in this axis-centric representation of tensors.
 	I hope some other person out there also finds that this visual reduces mental load when dealing with tensors.
 </p>
