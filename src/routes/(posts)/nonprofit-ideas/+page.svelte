@@ -62,6 +62,13 @@
 	hospital doesn’t need to handle everything, it just does what it can. Hopefully this can also help
 	normalize sharing health problems.
 </p>
+<p>
+	Many doctors would understandably be terrified to work in this environment. If they make a fatal mistake,
+	video will be online forever. But the video may save many more patients, so rather than hiding such mistakes,
+	we should make the reward worth the risk. A seven figure base salary would help. But more importantly, 
+	the best doctors should be able to thrive on the credibility of their public track record here,
+	which is far more meaningful to a sophisticated customer than a Harvard diploma could ever be.
+</p>
 
 <h2>Incentive rating agency</h2>
 <p>
