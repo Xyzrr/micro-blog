@@ -364,40 +364,39 @@ export function sample(model: Model, progress: number): Scene {
 		lerpV(inputPos(op, idx), arrangedPos(op, idx), arrangeT);
 
 	// --- axes ---
+	// Each operand axis glides continuously from its input pose into the output
+	// frame. Surviving (kept) axes land exactly on the output-frame axis and
+	// stay; contracted axes fade out as they get squeezed. There are no separate
+	// output axes, so a given axis is never drawn in two places at once.
 	const axes: Axis[] = [];
-	const operandAxisOpacity = 1 - smooth(bcastRaw / 0.6);
+	const outCentroid = centroidOf(model.outCells.map((c) => outFramePoint(c)));
 	(['a', 'b'] as const).forEach((op) => {
-		if (operandAxisOpacity <= 0.01) return;
 		const list = op === 'a' ? model.aDots : model.bDots;
-		const centroid = centroidOf(list.map((idx) => srcPos(op, idx)));
+		const inCentroid = centroidOf(list.map((idx) => inputPos(op, idx)));
+		const centroid = lerpV(inCentroid, outCentroid, arrangeT);
 		lettersOf(op).forEach((l) => {
 			const sz = sizeOf(l);
 			if (sz < 2) return;
+			const isSq = squeezedOf(op).includes(l);
 			const zero: Idx = {};
 			lettersOf(op).forEach((x) => (zero[x] = 0));
 			const end: Idx = { ...zero, [l]: sz - 1 };
-			const p0 = srcPos(op, zero);
-			const p1 = srcPos(op, end);
-			const isSq = squeezedOf(op).includes(l);
+			const inP0 = inputPos(op, zero);
+			const inP1 = inputPos(op, end);
+			// kept axes glide to the shared output-frame line (no micro offset);
+			// squeezed axes have vanished by the time arrange starts, so they
+			// just stay put.
+			const arrP0 = isSq ? inP0 : outFramePoint({});
+			const arrP1 = isSq ? inP1 : outFramePoint({ [l]: sz - 1 });
+			const p0 = lerpV(inP0, arrP0, arrangeT);
+			const p1 = lerpV(inP1, arrP1, arrangeT);
 			const base = colors.get(l) as string;
 			const color = isSq ? mixHex(base, GHOST, squeezeT) : base;
-			const opacity = operandAxisOpacity * (isSq ? 1 - squeezeT : 1);
+			const opacity = isSq ? 1 - squeezeT : 1;
+			if (opacity <= 0.01) return;
 			axes.push(buildAxis(`ax-${op}-${l}`, l, color, opacity, p0, p1, centroid));
 		});
 	});
-	const outAxisOpacity = smooth((progress - 0.42) / 0.2);
-	if (outAxisOpacity > 0.01) {
-		const centroid = centroidOf(model.outCells.map((c) => outFramePoint(c)));
-		spec.out.forEach((l) => {
-			const sz = sizeOf(l);
-			if (sz < 2) return;
-			const p0 = outFramePoint({});
-			const p1 = outFramePoint({ [l]: sz - 1 });
-			axes.push(
-				buildAxis(`ax-out-${l}`, l, colors.get(l) as string, outAxisOpacity, p0, p1, centroid)
-			);
-		});
-	}
 
 	// --- dots ---
 	const dots: Dot[] = [];
