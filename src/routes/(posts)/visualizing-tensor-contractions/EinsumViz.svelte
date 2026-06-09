@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { buildModel, sample, validateEinsum, PRESETS, PHASE_INFO, VIEW, MAG } from './einsum';
+	import { buildModel, sample, validateEinsum, PRESETS, PHASE_INFO, VIEW, LENS } from './einsum';
 
 	export let expr = 'ij,jk->ik';
 	export let labels: Record<string, string> = {};
@@ -153,6 +153,9 @@
 						<path d="M0,0 L6,3 L0,6 Z" fill={color} />
 					</marker>
 				{/each}
+				<clipPath id={`lens-${uid}`}>
+					<circle cx={LENS.x} cy={LENS.y} r={LENS.r} />
+				</clipPath>
 			</defs>
 
 			{#each scene.axes as ax (ax.key)}
@@ -203,26 +206,25 @@
 					opacity={scene.highlight.opacity}
 				/>
 			{/if}
+			{#each scene.connectors as c (c.key)}
+				<line
+					x1={c.x1}
+					y1={c.y1}
+					x2={c.x2}
+					y2={c.y2}
+					stroke={c.color}
+					stroke-width="1"
+					stroke-dasharray="4 4"
+					opacity={c.opacity}
+				/>
+			{/each}
 
 			{#each scene.dots as d (d.key)}
 				<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
 			{/each}
-		</svg>
 
-		<svg
-			class="mag"
-			viewBox={`0 0 ${MAG.w} ${MAG.h}`}
-			preserveAspectRatio="xMidYMid meet"
-			role="img"
-			aria-label="dot product detail"
-		>
-			<defs>
-				<clipPath id={`lens-${uid}`}>
-					<circle cx={MAG.w / 2} cy="95" r="72" />
-				</clipPath>
-			</defs>
 			{#if scene.mag.active}
-				<circle cx={MAG.w / 2} cy="95" r="72" fill="rgb(247, 247, 248)" />
+				<circle cx={LENS.x} cy={LENS.y} r={LENS.r} fill="rgb(247, 247, 248)" />
 				<g clip-path={`url(#lens-${uid})`}>
 					{#each scene.mag.axes as ax (ax.key)}
 						<line
@@ -266,8 +268,8 @@
 					{/if}
 					{#if scene.mag.glyph}
 						<text
-							x={MAG.w / 2}
-							y="147"
+							x={LENS.x}
+							y={LENS.y + 52}
 							fill="#9aa0a8"
 							font-size="14"
 							text-anchor="middle"
@@ -276,17 +278,17 @@
 					{/if}
 				</g>
 				<circle
-					cx={MAG.w / 2}
-					cy="95"
-					r="72"
+					cx={LENS.x}
+					cy={LENS.y}
+					r={LENS.r}
 					fill="none"
 					stroke="#403e43"
 					stroke-width="1.5"
 					opacity="0.5"
 				/>
 				<text
-					x={MAG.w / 2}
-					y="188"
+					x={LENS.x}
+					y={LENS.y + LENS.r + 21}
 					fill="#403e43"
 					font-size="12"
 					font-style="italic"
@@ -346,20 +348,10 @@
 		margin: 24px 0;
 		padding: 14px 0;
 	}
-	.stage {
-		display: flex;
-		align-items: stretch;
-		gap: 8px;
-	}
 	.main {
-		flex: 1 1 auto;
-		min-width: 0;
-		height: 280px;
-	}
-	.mag {
-		flex: 0 0 140px;
-		width: 140px;
-		height: 280px;
+		display: block;
+		width: 100%;
+		height: auto;
 	}
 	.caption {
 		margin-top: 8px;
@@ -459,18 +451,5 @@
 	.chip.active {
 		background: rgb(64, 62, 67);
 		color: white;
-	}
-	@media (max-width: 520px) {
-		.stage {
-			flex-direction: column;
-		}
-		.mag {
-			flex: 0 0 170px;
-			width: 100%;
-			height: 170px;
-		}
-		.main {
-			height: 240px;
-		}
 	}
 </style>

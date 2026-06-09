@@ -42,8 +42,10 @@ const DIRS: Vec[] = [
 	{ x: 0.55, y: -0.42 }
 ];
 
-export const VIEW = { w: 420, h: 300 };
-export const MAG = { w: 180, h: 210 };
+export const VIEW = { w: 640, h: 300 };
+// The zoom lens lives in the same SVG as the main view, so the dashed guide
+// lines can run from the highlighted cell straight to the lens.
+export const LENS = { x: 545, y: 95, r: 72 };
 
 const SIZE_MAP: Record<string, number> = {
 	i: 3,
@@ -363,6 +365,7 @@ export interface Scene {
 	vectorLines: VLine[];
 	dots: Dot[];
 	highlight: { x: number; y: number; r: number; opacity: number } | null;
+	connectors: VLine[]; // dashed guides from the highlighted cell to the lens
 	mag: MagState;
 }
 
@@ -599,7 +602,6 @@ export function sample(
 	// contributions: compressed vectors broadcast to each output cell, then the
 	// same reorient -> multiply -> sum that the magnifier shows, run on every
 	// cell simultaneously.
-	const n = model.outCells.length;
 	const GRID_GAP = 5; // vertical separation of the two parallel rows in a cell
 	const inOpacity = smooth(bcastRaw / 0.45);
 	const parOff = (qi: number): Vec => ({ x: (qi - (K - 1) / 2) * MICRO, y: 0 });
@@ -607,6 +609,9 @@ export function sample(
 		(['a', 'b'] as const).forEach((op, opIdx) => {
 			const opLetters = lettersOf(op);
 			const opGap = op === 'a' ? -GRID_GAP : GRID_GAP;
+			// the two piles sit diagonally offset within a cell rather than both
+			// centered on it, so they read as two arrivals instead of one cross
+			const sideOff: Vec = op === 'a' ? { x: -5, y: -3.4 } : { x: 5, y: 3.4 };
 			// stagger copies so they sweep across the grid along the directions
 			// this operand broadcasts over, instead of all arriving at once
 			const lacks = lacksOf(op);
@@ -622,7 +627,7 @@ export function sample(
 					opLetters.forEach((l) => {
 						if (cell[l] !== undefined) merged[l] = cell[l];
 					});
-					const real = add(center, operandMicro(op, q)); // arrives in real orientation
+					const real = add(add(center, sideOff), operandMicro(op, q)); // real orientation
 					let pos: Vec;
 					let opac: number;
 					if (phase === 'resolve') {
@@ -673,12 +678,27 @@ export function sample(
 		});
 	}
 
-	// highlight ring on the representative cell that the zoom is showing (0,0)
+	// highlight ring on the representative cell that the zoom is showing (0,0),
+	// with dashed guides making it clear the lens is a zoom of that cell
 	const repIdx = 0;
 	let highlight: Scene['highlight'] = null;
-	if ((phase === 'resolve' || phase === 'broadcast') && n > 1) {
+	const connectors: VLine[] = [];
+	if (phase === 'resolve' || phase === 'broadcast') {
 		const c = outFramePoint(model.outCells[repIdx]);
-		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 };
+		const vis = smooth(bcastRaw / 0.3);
+		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 * vis };
+		const k = 0.707;
+		for (const s of [-1, 1]) {
+			connectors.push({
+				key: `cn-${s}`,
+				x1: c.x + 15 * k,
+				y1: c.y + s * 15 * k,
+				x2: LENS.x - LENS.r * k,
+				y2: LENS.y + s * LENS.r * k,
+				color: '#b9bbc0',
+				opacity: 0.55 * vis
+			});
+		}
 	}
 
 	// --- magnifier --- (the same ritual, zoomed in with the piles' true structure)
@@ -694,7 +714,7 @@ export function sample(
 	// --- caption ---
 	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
 
-	return { phase, caption, axes, vectorLines, dots, highlight, mag };
+	return { phase, caption, axes, vectorLines, dots, highlight, connectors, mag };
 }
 
 function captionFor(
@@ -751,7 +771,7 @@ function sampleMag(
 
 	const { cl, ro, mp, sm } = resolveStages(model, resolveRaw);
 
-	const LC: Vec = { x: MAG.w / 2, y: 95 };
+	const LC: Vec = { x: LENS.x, y: LENS.y };
 	const maxPileRank = Math.max(model.aSqueezed.length, model.bSqueezed.length);
 	const SM = maxPileRank >= 3 ? 10 : 14; // lattice spacing inside the lens
 	const alignOff: Vec = contracted.length <= 1 ? { x: 22, y: 0 } : { x: 7, y: -6 };
@@ -775,7 +795,9 @@ function sampleMag(
 		const squeezed = op === 'a' ? model.aSqueezed : model.bSqueezed;
 		const solo = squeezed.filter((l) => !contracted.includes(l));
 		const pileLs = [...contracted, ...solo];
-		const center: Vec = { x: LC.x + (op === 'a' ? -34 : 34), y: LC.y };
+		// mirror the diagonal arrangement the piles have inside the cell
+		const center: Vec =
+			op === 'a' ? { x: LC.x - 30, y: LC.y - 17 } : { x: LC.x + 30, y: LC.y + 17 };
 		const aligned = add(LC, mul(alignOff, op === 'a' ? -0.5 : 0.5));
 		const realRel = (ix: Idx): Vec => {
 			let p: Vec = { x: 0, y: 0 };
