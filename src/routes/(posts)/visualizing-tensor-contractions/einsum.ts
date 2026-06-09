@@ -1,0 +1,572 @@
+// Pure logic for the einsum contraction visualization.
+// No Svelte here: parse a preset, classify its index letters into roles,
+// and sample the whole animated scene at a given global progress in [0, 1].
+
+export interface Vec {
+	x: number;
+	y: number;
+}
+
+export interface Spec {
+	a: string[];
+	b: string[];
+	out: string[];
+}
+
+export type Role = 'batch' | 'freeA' | 'freeB' | 'contracted' | 'redA' | 'redB';
+
+export interface Preset {
+	label: string;
+	expr: string;
+}
+
+export const PRESETS: Preset[] = [
+	{ label: 'matmul', expr: 'ij,jk->ik' },
+	{ label: 'batched matmul', expr: 'bij,bjk->bik' },
+	{ label: 'matrix x vector', expr: 'ij,j->i' },
+	{ label: 'dot product', expr: 'i,i->' },
+	{ label: 'outer product', expr: 'i,j->ij' },
+	{ label: 'hadamard', expr: 'ij,ij->ij' },
+	{ label: 'reduction', expr: 'ij,jk->k' },
+	{ label: 'rank-3', expr: 'ijk,ikl->ijl' }
+];
+
+// --- geometry constants -----------------------------------------------------
+
+const U = 30; // spacing between dots along an axis
+const MICRO = 5; // spacing once an axis is squeezed
+// Axis directions by slot: 0 -> down, 1 -> right, 2 -> depth (isometric).
+const DIRS: Vec[] = [
+	{ x: 0, y: 1 },
+	{ x: 1, y: 0 },
+	{ x: 0.55, y: -0.42 }
+];
+
+export const VIEW = { w: 420, h: 300 };
+export const MAG = { w: 180, h: 210 };
+
+const SIZE_MAP: Record<string, number> = {
+	i: 3,
+	j: 4,
+	k: 3,
+	l: 2,
+	m: 3,
+	n: 2,
+	b: 2,
+	p: 3,
+	q: 3
+};
+const sizeOf = (l: string): number => SIZE_MAP[l] ?? 3;
+
+const PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6', '#ec4899'];
+const DOT_GRAY = '#b6b4ba';
+const RESULT_GRAY = '#86848a';
+const GHOST = '#c7c5cb';
+
+// --- small math helpers -----------------------------------------------------
+
+const add = (a: Vec, b: Vec): Vec => ({ x: a.x + b.x, y: a.y + b.y });
+const mul = (a: Vec, s: number): Vec => ({ x: a.x * s, y: a.y * s });
+const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+const lerpV = (a: Vec, b: Vec, t: number): Vec => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
+const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
+const easeInOut = (t: number): number =>
+	t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const smooth = (t: number): number => {
+	const c = clamp(t, 0, 1);
+	return c * c * (3 - 2 * c);
+};
+
+function mixHex(a: string, b: string, t: number): string {
+	const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+	const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+	const mixed = pa.map((v, i) => Math.round(lerp(v, pb[i], clamp(t, 0, 1))));
+	return '#' + mixed.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+type Idx = Record<string, number>;
+
+function combos(letters: string[]): Idx[] {
+	let res: Idx[] = [{}];
+	for (const l of letters) {
+		const next: Idx[] = [];
+		for (const r of res) for (let v = 0; v < sizeOf(l); v++) next.push({ ...r, [l]: v });
+		res = next;
+	}
+	return res;
+}
+
+// --- parsing + classification ----------------------------------------------
+
+export function parseEinsum(raw: string): Spec {
+	const [lhs, rhs = ''] = raw.split('->');
+	const [aStr = '', bStr = ''] = lhs.split(',');
+	return {
+		a: [...aStr.trim()],
+		b: [...bStr.trim()],
+		out: [...rhs.trim()]
+	};
+}
+
+export function classify(spec: Spec): Map<string, Role> {
+	const inA = new Set(spec.a);
+	const inB = new Set(spec.b);
+	const inO = new Set(spec.out);
+	const roles = new Map<string, Role>();
+	const all = new Set([...spec.a, ...spec.b, ...spec.out]);
+	for (const l of all) {
+		const a = inA.has(l);
+		const b = inB.has(l);
+		const o = inO.has(l);
+		let r: Role;
+		if (a && b && o) r = 'batch';
+		else if (a && b) r = 'contracted';
+		else if (a && o) r = 'freeA';
+		else if (b && o) r = 'freeB';
+		else if (a) r = 'redA';
+		else r = 'redB';
+		roles.set(l, r);
+	}
+	return roles;
+}
+
+// --- model ------------------------------------------------------------------
+
+export interface Model {
+	raw: string;
+	spec: Spec;
+	roles: Map<string, Role>;
+	colors: Map<string, string>;
+	contracted: string[];
+	aSqueezed: string[];
+	bSqueezed: string[];
+	aIn: Vec;
+	bIn: Vec;
+	outOrigin: Vec;
+	aDots: Idx[];
+	bDots: Idx[];
+	outCells: Idx[];
+	contractCombos: Idx[];
+	K: number;
+}
+
+function colorMap(spec: Spec): Map<string, string> {
+	const seen = new Set<string>();
+	const order: string[] = [];
+	for (const l of [...spec.a, ...spec.b, ...spec.out])
+		if (!seen.has(l)) {
+			seen.add(l);
+			order.push(l);
+		}
+	const m = new Map<string, string>();
+	order.forEach((l, i) => m.set(l, PALETTE[i % PALETTE.length]));
+	return m;
+}
+
+function pointFor(letters: string[], idx: Idx, spacing: (l: string, slot: number) => number): Vec {
+	let p: Vec = { x: 0, y: 0 };
+	letters.forEach((l, slot) => {
+		p = add(p, mul(DIRS[slot], (idx[l] ?? 0) * spacing(l, slot)));
+	});
+	return p;
+}
+
+function centerOrigin(center: Vec, letters: string[]): Vec {
+	const pts = combos(letters).map((idx) => pointFor(letters, idx, () => U));
+	const xs = pts.map((p) => p.x);
+	const ys = pts.map((p) => p.y);
+	const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+	const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+	return { x: center.x - cx, y: center.y - cy };
+}
+
+export function buildModel(raw: string): Model {
+	const spec = parseEinsum(raw);
+	const roles = classify(spec);
+	const roleOf = (l: string) => roles.get(l) as Role;
+	const contracted = spec.a.filter((l) => roleOf(l) === 'contracted');
+	const aSqueezed = spec.a.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redA');
+	const bSqueezed = spec.b.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redB');
+	const K = contracted.reduce((p, l) => p * sizeOf(l), 1);
+	return {
+		raw,
+		spec,
+		roles,
+		colors: colorMap(spec),
+		contracted,
+		aSqueezed,
+		bSqueezed,
+		aIn: centerOrigin({ x: 110, y: 150 }, spec.a),
+		bIn: centerOrigin({ x: 320, y: 150 }, spec.b),
+		outOrigin: centerOrigin({ x: 210, y: 150 }, spec.out),
+		aDots: combos(spec.a),
+		bDots: combos(spec.b),
+		outCells: combos(spec.out),
+		contractCombos: combos(contracted),
+		K
+	};
+}
+
+// --- phases -----------------------------------------------------------------
+
+interface Phase {
+	key: string;
+	dur: number;
+}
+const PHASES: Phase[] = [
+	{ key: 'intro', dur: 0.1 },
+	{ key: 'squeeze', dur: 0.24 },
+	{ key: 'arrange', dur: 0.16 },
+	{ key: 'broadcast', dur: 0.2 },
+	{ key: 'resolve', dur: 0.3 }
+];
+
+function phaseBounds(key: string): [number, number] {
+	let start = 0;
+	for (const p of PHASES) {
+		if (p.key === key) return [start, start + p.dur];
+		start += p.dur;
+	}
+	return [0, 1];
+}
+function localRaw(progress: number, key: string): number {
+	const [s, e] = phaseBounds(key);
+	return clamp((progress - s) / (e - s), 0, 1);
+}
+function currentPhase(progress: number): string {
+	let start = 0;
+	for (const p of PHASES) {
+		if (progress < start + p.dur) return p.key;
+		start += p.dur;
+	}
+	return PHASES[PHASES.length - 1].key;
+}
+
+// --- sampled scene ----------------------------------------------------------
+
+export interface Dot {
+	key: string;
+	x: number;
+	y: number;
+	r: number;
+	opacity: number;
+	fill: string;
+}
+export interface Axis {
+	key: string;
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	color: string;
+	opacity: number;
+	label: string;
+	lx: number;
+	ly: number;
+}
+export interface MagState {
+	active: boolean;
+	aDots: Dot[];
+	bDots: Dot[];
+	prodDots: Dot[];
+	sumDot: Dot | null;
+}
+export interface Scene {
+	phase: string;
+	caption: string;
+	axes: Axis[];
+	dots: Dot[];
+	highlight: { x: number; y: number; r: number; opacity: number } | null;
+	mag: MagState;
+}
+
+const AX_PAD = U; // perpendicular gap between dots and their axis (one cell of spacing)
+const AX_EXT = 7; // how far the axis extends past the end dots
+const unit = (v: Vec): Vec => {
+	const m = Math.hypot(v.x, v.y) || 1;
+	return { x: v.x / m, y: v.y / m };
+};
+const centroidOf = (pts: Vec[]): Vec => {
+	if (pts.length === 0) return { x: 0, y: 0 };
+	const s = pts.reduce((a, p) => add(a, p), { x: 0, y: 0 });
+	return { x: s.x / pts.length, y: s.y / pts.length };
+};
+function buildAxis(
+	key: string,
+	label: string,
+	color: string,
+	opacity: number,
+	p0: Vec,
+	p1: Vec,
+	centroid: Vec
+): Axis {
+	const d = unit({ x: p1.x - p0.x, y: p1.y - p0.y });
+	let pe: Vec = { x: -d.y, y: d.x };
+	const mid: Vec = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+	const away: Vec = { x: mid.x - centroid.x, y: mid.y - centroid.y };
+	if (pe.x * away.x + pe.y * away.y < 0) pe = { x: -pe.x, y: -pe.y };
+	const ox = pe.x * AX_PAD;
+	const oy = pe.y * AX_PAD;
+	const x1 = p0.x + ox - d.x * AX_EXT;
+	const y1 = p0.y + oy - d.y * AX_EXT;
+	const x2 = p1.x + ox + d.x * AX_EXT;
+	const y2 = p1.y + oy + d.y * AX_EXT;
+	return { key, x1, y1, x2, y2, color, opacity, label, lx: x2 + d.x * 9, ly: y2 + d.y * 9 };
+}
+
+const keyOf = (idx: Idx): string =>
+	Object.keys(idx)
+		.sort()
+		.map((k) => `${k}${idx[k]}`)
+		.join('');
+
+export function sample(model: Model, progress: number): Scene {
+	const { spec, colors, aSqueezed, bSqueezed, contracted, outOrigin } = model;
+
+	const squeezeT = easeInOut(localRaw(progress, 'squeeze'));
+	const arrangeT = easeInOut(localRaw(progress, 'arrange'));
+	const broadcastT = easeInOut(localRaw(progress, 'broadcast'));
+	const bcastRaw = localRaw(progress, 'broadcast');
+	const resolveRaw = localRaw(progress, 'resolve');
+	const phase = currentPhase(progress);
+
+	const squeezedOf = (op: 'a' | 'b') => (op === 'a' ? aSqueezed : bSqueezed);
+	const lettersOf = (op: 'a' | 'b') => (op === 'a' ? spec.a : spec.b);
+	const originOf = (op: 'a' | 'b') => (op === 'a' ? model.aIn : model.bIn);
+
+	const outFramePoint = (idx: Idx): Vec => {
+		let p = { ...outOrigin };
+		spec.out.forEach((l, slot) => {
+			p = add(p, mul(DIRS[slot], (idx[l] ?? 0) * U));
+		});
+		return p;
+	};
+	const operandMicro = (op: 'a' | 'b', idx: Idx): Vec => {
+		let d: Vec = { x: 0, y: 0 };
+		lettersOf(op).forEach((l, slot) => {
+			if (squeezedOf(op).includes(l) && idx[l] !== undefined) {
+				d = add(d, mul(DIRS[slot], (idx[l] - (sizeOf(l) - 1) / 2) * MICRO));
+			}
+		});
+		return d;
+	};
+	const arrangedPos = (op: 'a' | 'b', idx: Idx): Vec =>
+		add(outFramePoint(idx), operandMicro(op, idx));
+	const inputPos = (op: 'a' | 'b', idx: Idx): Vec => {
+		let p = { ...originOf(op) };
+		lettersOf(op).forEach((l, slot) => {
+			const sp = squeezedOf(op).includes(l) ? lerp(U, MICRO, squeezeT) : U;
+			p = add(p, mul(DIRS[slot], (idx[l] ?? 0) * sp));
+		});
+		return p;
+	};
+	const srcPos = (op: 'a' | 'b', idx: Idx): Vec =>
+		lerpV(inputPos(op, idx), arrangedPos(op, idx), arrangeT);
+
+	// --- axes ---
+	const axes: Axis[] = [];
+	const operandAxisOpacity = 1 - smooth(bcastRaw / 0.6);
+	(['a', 'b'] as const).forEach((op) => {
+		if (operandAxisOpacity <= 0.01) return;
+		const list = op === 'a' ? model.aDots : model.bDots;
+		const centroid = centroidOf(list.map((idx) => srcPos(op, idx)));
+		lettersOf(op).forEach((l) => {
+			const sz = sizeOf(l);
+			if (sz < 2) return;
+			const zero: Idx = {};
+			lettersOf(op).forEach((x) => (zero[x] = 0));
+			const end: Idx = { ...zero, [l]: sz - 1 };
+			const p0 = srcPos(op, zero);
+			const p1 = srcPos(op, end);
+			const isSq = squeezedOf(op).includes(l);
+			const base = colors.get(l) as string;
+			const color = isSq ? mixHex(base, GHOST, squeezeT) : base;
+			const opacity = operandAxisOpacity * (isSq ? 1 - squeezeT : 1);
+			axes.push(buildAxis(`ax-${op}-${l}`, l, color, opacity, p0, p1, centroid));
+		});
+	});
+	const outAxisOpacity = smooth((progress - 0.42) / 0.2);
+	if (outAxisOpacity > 0.01) {
+		const centroid = centroidOf(model.outCells.map((c) => outFramePoint(c)));
+		spec.out.forEach((l) => {
+			const sz = sizeOf(l);
+			if (sz < 2) return;
+			const p0 = outFramePoint({});
+			const p1 = outFramePoint({ [l]: sz - 1 });
+			axes.push(
+				buildAxis(`ax-out-${l}`, l, colors.get(l) as string, outAxisOpacity, p0, p1, centroid)
+			);
+		});
+	}
+
+	// --- dots ---
+	const dots: Dot[] = [];
+
+	// source lattice dots (input -> squeeze -> arrange), fade out as broadcast starts
+	const srcOpacity = 1 - smooth(bcastRaw / 0.45);
+	if (srcOpacity > 0.01) {
+		(['a', 'b'] as const).forEach((op) => {
+			const list = op === 'a' ? model.aDots : model.bDots;
+			for (const idx of list) {
+				const p = srcPos(op, idx);
+				dots.push({
+					key: `s-${op}-${keyOf(idx)}`,
+					x: p.x,
+					y: p.y,
+					r: 3,
+					opacity: srcOpacity,
+					fill: DOT_GRAY
+				});
+			}
+		});
+	}
+
+	// contributions: compressed vectors broadcast to each output cell
+	const n = model.outCells.length;
+	const inOpacity = smooth(bcastRaw / 0.45);
+	if (inOpacity > 0.01) {
+		(['a', 'b'] as const).forEach((op) => {
+			const opLetters = lettersOf(op);
+			model.outCells.forEach((cell, ci) => {
+				const sv = phase === 'resolve' ? clamp(resolveRaw * n - ci, 0, 1) : 0;
+				const center = outFramePoint(cell);
+				const opac = inOpacity * (1 - smooth(sv));
+				if (opac <= 0.01) return;
+				for (const q of model.contractCombos) {
+					// kept indices this operand reads from the cell + the contracted index
+					const merged: Idx = { ...q };
+					opLetters.forEach((l) => {
+						if (cell[l] !== undefined) merged[l] = cell[l];
+					});
+					const start = arrangedPos(op, merged);
+					const end = add(center, operandMicro(op, q));
+					const base = lerpV(start, end, broadcastT);
+					const pos = lerpV(base, center, smooth(sv));
+					dots.push({
+						key: `c-${op}-${ci}-${keyOf(q)}`,
+						x: pos.x,
+						y: pos.y,
+						r: 3,
+						opacity: opac,
+						fill: DOT_GRAY
+					});
+				}
+			});
+		});
+	}
+
+	// result dots: appear as the magnifier sweep passes each cell
+	if (phase === 'resolve') {
+		model.outCells.forEach((cell, ci) => {
+			const sv = clamp(resolveRaw * n - ci, 0, 1);
+			const o = smooth(sv);
+			if (o <= 0.01) return;
+			const c = outFramePoint(cell);
+			dots.push({ key: `r-${ci}`, x: c.x, y: c.y, r: 4, opacity: o, fill: RESULT_GRAY });
+		});
+	}
+
+	// highlight ring on the focused output cell
+	let highlight: Scene['highlight'] = null;
+	if (phase === 'resolve' && n > 1) {
+		const fi = clamp(Math.floor(resolveRaw * n), 0, n - 1);
+		const c = outFramePoint(model.outCells[fi]);
+		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.5 };
+	}
+
+	// --- magnifier ---
+	const mag = sampleMag(model, progress, resolveRaw, phase, bcastRaw);
+
+	// --- caption ---
+	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
+
+	return { phase, caption, axes, dots, highlight, mag };
+}
+
+function captionFor(
+	phase: string,
+	contracted: string[],
+	aSqueezed: string[],
+	bSqueezed: string[]
+): string {
+	switch (phase) {
+		case 'intro':
+			return 'Two tensors. The axes carry the meaning; the gray dots are just numbers.';
+		case 'squeeze':
+			if (contracted.length) return `Contract ${contracted.join('')}: squeeze that axis away.`;
+			if (aSqueezed.length || bSqueezed.length) return 'Reduce the summed-away axes.';
+			return 'Nothing to contract here.';
+		case 'arrange':
+			return 'Arrange the surviving axes into the output frame.';
+		case 'broadcast':
+			return 'Copy each compressed vector out to every output cell.';
+		case 'resolve':
+			return contracted.length
+				? 'At each cell, take the dot product along the contracted axis.'
+				: 'At each cell, multiply the values together.';
+		default:
+			return '';
+	}
+}
+
+function sampleMag(
+	model: Model,
+	progress: number,
+	resolveRaw: number,
+	phase: string,
+	bcastRaw: number
+): MagState {
+	const active = bcastRaw > 0.01 || phase === 'resolve';
+	if (!active) return { active: false, aDots: [], bDots: [], prodDots: [], sumDot: null };
+
+	const K = Math.max(model.K, 1);
+	const n = model.outCells.length;
+	let s = 0;
+	if (phase === 'resolve') {
+		const fi = clamp(Math.floor(resolveRaw * n), 0, n - 1);
+		s = clamp(resolveRaw * n - fi, 0, 1);
+	}
+
+	const cColor = model.contracted.length
+		? (model.colors.get(model.contracted[0]) as string)
+		: '#9aa0a6';
+
+	const cx = MAG.w / 2;
+	const mx = Math.min(22, (MAG.w - 36) / Math.max(K, 1));
+	const xFor = (i: number) => cx - ((K - 1) / 2) * mx + i * mx;
+	const yA0 = 50;
+	const yB0 = 150;
+	const yA1 = 82;
+	const yB1 = 118;
+	const yMid = 100;
+
+	const al = smooth(clamp(s / 0.35, 0, 1));
+	const ml = smooth(clamp((s - 0.35) / 0.3, 0, 1));
+	const sm = smooth(clamp((s - 0.65) / 0.35, 0, 1));
+
+	const aDots: Dot[] = [];
+	const bDots: Dot[] = [];
+	const prodDots: Dot[] = [];
+	for (let i = 0; i < K; i++) {
+		const x = xFor(i);
+		let ay = lerp(yA0, yA1, al);
+		let by = lerp(yB0, yB1, al);
+		ay = lerp(ay, yMid, ml);
+		by = lerp(by, yMid, ml);
+		const fade = 1 - ml;
+		aDots.push({ key: `ma-${i}`, x, y: ay, r: 4, opacity: fade, fill: cColor });
+		bDots.push({ key: `mb-${i}`, x, y: by, r: 4, opacity: fade, fill: cColor });
+		const px = lerp(x, cx, sm);
+		prodDots.push({
+			key: `mp-${i}`,
+			x: px,
+			y: yMid,
+			r: 4,
+			opacity: ml * (1 - sm),
+			fill: '#6b7280'
+		});
+	}
+	const sumDot: Dot = { key: 'msum', x: cx, y: yMid, r: 6, opacity: sm, fill: '#403e43' };
+
+	return { active: true, aDots, bDots, prodDots, sumDot };
+}
