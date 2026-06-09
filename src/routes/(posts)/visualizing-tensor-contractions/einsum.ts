@@ -260,6 +260,7 @@ export interface Axis {
 	y2: number;
 	color: string;
 	opacity: number;
+	letter: string;
 	label: string;
 	lx: number;
 	ly: number;
@@ -294,6 +295,7 @@ const centroidOf = (pts: Vec[]): Vec => {
 };
 function buildAxis(
 	key: string,
+	letter: string,
 	label: string,
 	color: string,
 	opacity: number,
@@ -312,7 +314,20 @@ function buildAxis(
 	const y1 = p0.y + oy - d.y * AX_EXT;
 	const x2 = p1.x + ox + d.x * AX_EXT;
 	const y2 = p1.y + oy + d.y * AX_EXT;
-	return { key, x1, y1, x2, y2, color, opacity, label, lx: x2 + d.x * 9, ly: y2 + d.y * 9 };
+	const lead = label.length > 2 ? 14 : 9;
+	return {
+		key,
+		x1,
+		y1,
+		x2,
+		y2,
+		color,
+		opacity,
+		letter,
+		label,
+		lx: x2 + d.x * lead,
+		ly: y2 + d.y * lead
+	};
 }
 
 const keyOf = (idx: Idx): string =>
@@ -321,8 +336,13 @@ const keyOf = (idx: Idx): string =>
 		.map((k) => `${k}${idx[k]}`)
 		.join('');
 
-export function sample(model: Model, progress: number): Scene {
+export function sample(
+	model: Model,
+	progress: number,
+	labels: Record<string, string> = {}
+): Scene {
 	const { spec, colors, aSqueezed, bSqueezed, contracted, outOrigin } = model;
+	const labelOf = (l: string): string => labels[l] ?? l;
 
 	const squeezeT = easeInOut(localRaw(progress, 'squeeze'));
 	const arrangeT = easeInOut(localRaw(progress, 'arrange'));
@@ -402,7 +422,7 @@ export function sample(model: Model, progress: number): Scene {
 			const color = isSq ? mixHex(base, GHOST, squeezeT) : base;
 			const opacity = isSq ? 1 - squeezeT : 1;
 			if (opacity <= 0.01) return;
-			axes.push(buildAxis(`ax-${op}-${l}`, l, color, opacity, p0, p1, centroid));
+			axes.push(buildAxis(`ax-${op}-${l}`, l, labelOf(l), color, opacity, p0, p1, centroid));
 		});
 	});
 
@@ -499,7 +519,7 @@ export function sample(model: Model, progress: number): Scene {
 	}
 
 	// --- magnifier --- (same reorient -> multiply -> sum, zoomed in)
-	const mag = sampleMag(model, repIdx, ro, mp, sm, bcastRaw > 0.01 || phase === 'resolve');
+	const mag = sampleMag(model, repIdx, ro, mp, sm, bcastRaw > 0.01 || phase === 'resolve', labelOf);
 
 	// --- caption ---
 	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
@@ -539,7 +559,8 @@ function sampleMag(
 	ro: number,
 	mp: number,
 	sm: number,
-	active: boolean
+	active: boolean,
+	labelOf: (l: string) => string
 ): MagState {
 	if (!active)
 		return { active: false, label: '', aDots: [], bDots: [], prodDots: [], sumDot: null };
@@ -547,7 +568,7 @@ function sampleMag(
 	const K = Math.max(model.K, 1);
 	const cell = model.outCells[repIdx] ?? {};
 	const label = model.spec.out.length
-		? model.spec.out.map((l) => `${l}=${cell[l] ?? 0}`).join('  ')
+		? model.spec.out.map((l) => `${labelOf(l)} ${cell[l] ?? 0}`).join(',  ')
 		: 'scalar';
 
 	const cColor = model.contracted.length

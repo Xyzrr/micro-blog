@@ -1,17 +1,22 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { buildModel, sample, PRESETS, VIEW, MAG } from './einsum';
+	import { buildModel, sample, VIEW, MAG } from './einsum';
+
+	export let expr = 'ij,jk->ik';
+	export let labels: Record<string, string> = {};
 
 	const DURATION = 15000; // ms for a full play-through
 
-	let presetIdx = 0;
 	let progress = 0;
-	let playing = true;
+	let playing = false;
+	let userPaused = false;
 	let raf = 0;
 	let last: number | null = null;
+	let container: HTMLDivElement;
 
-	$: model = buildModel(PRESETS[presetIdx].expr);
-	$: scene = sample(model, progress);
+	$: model = buildModel(expr);
+	$: scene = sample(model, progress, labels);
+	$: uid = expr.replace(/[^a-z0-9]/gi, '_');
 
 	function frame(t: number) {
 		if (last === null) last = t;
@@ -29,60 +34,64 @@
 
 	onMount(() => {
 		raf = requestAnimationFrame(frame);
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					if (e.isIntersecting) {
+						if (!userPaused && progress < 1) {
+							playing = true;
+							last = null;
+						}
+					} else {
+						playing = false;
+					}
+				}
+			},
+			{ threshold: 0.35 }
+		);
+		if (container) io.observe(container);
+		return () => io.disconnect();
 	});
 	onDestroy(() => {
 		if (raf) cancelAnimationFrame(raf);
 	});
 
 	function play() {
+		userPaused = false;
 		if (progress >= 1) progress = 0;
 		playing = true;
 		last = null;
 	}
 	function pause() {
+		userPaused = true;
 		playing = false;
 	}
 	function restart() {
-		progress = 0;
-		playing = true;
-		last = null;
-	}
-	function selectPreset(i: number) {
-		presetIdx = i;
+		userPaused = false;
 		progress = 0;
 		playing = true;
 		last = null;
 	}
 	function scrub(e: Event) {
 		playing = false;
+		userPaused = true;
 		progress = +(e.target as HTMLInputElement).value;
 	}
 </script>
 
-<div class="viz">
-	<div class="presets">
-		{#each PRESETS as p, i}
-			<button
-				class="preset"
-				class:active={i === presetIdx}
-				on:click={() => selectPreset(i)}
-				title={p.expr}>{p.label}</button
-			>
-		{/each}
-	</div>
-
+<div class="viz" bind:this={container}>
 	<div class="stage">
 		<svg
 			class="main"
 			viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
 			preserveAspectRatio="xMidYMid meet"
 			role="img"
-			aria-label={`einsum ${model.raw}`}
+			aria-label={`einsum ${expr}`}
 		>
 			<defs>
 				{#each [...model.colors] as [letter, color]}
 					<marker
-						id={`arrow-${letter}`}
+						id={`arrow-${uid}-${letter}`}
 						markerWidth="6"
 						markerHeight="6"
 						refX="4"
@@ -104,14 +113,14 @@
 					stroke-width="2"
 					stroke-linecap="round"
 					opacity={ax.opacity}
-					marker-end={`url(#arrow-${ax.label})`}
+					marker-end={`url(#arrow-${uid}-${ax.letter})`}
 				/>
 				<text
 					x={ax.lx}
 					y={ax.ly}
 					fill={ax.color}
 					opacity={ax.opacity}
-					font-size="13"
+					font-size={ax.label.length > 2 ? 11 : 13}
 					font-style="italic"
 					text-anchor="middle"
 					dominant-baseline="middle">{ax.label}</text
@@ -150,7 +159,7 @@
 					x={MAG.w / 2}
 					y="38"
 					fill="#403e43"
-					font-size="13"
+					font-size="12"
 					font-style="italic"
 					text-anchor="middle">{scene.mag.label}</text
 				>
@@ -194,9 +203,7 @@
 		{/if}
 		<button class="ctrl" on:click={restart} aria-label="Restart">
 			<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-				><path
-					d="M12 5V2L7 7l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"
-				/></svg
+				><path d="M12 5V2L7 7l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z" /></svg
 			>
 		</button>
 		<input
@@ -218,30 +225,6 @@
 		padding: 14px;
 		background: rgb(238, 238, 240);
 		border-radius: 8px;
-	}
-	.presets {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-bottom: 12px;
-	}
-	.preset {
-		font-size: 12px;
-		padding: 3px 9px;
-		border-radius: 999px;
-		border: 1px solid rgb(210, 208, 213);
-		background: rgb(248, 248, 249);
-		color: rgb(100, 98, 103);
-		cursor: pointer;
-		transition: all 0.15s;
-	}
-	.preset:hover {
-		border-color: rgb(150, 148, 153);
-	}
-	.preset.active {
-		background: rgb(64, 62, 67);
-		border-color: rgb(64, 62, 67);
-		color: rgb(246, 246, 247);
 	}
 	.stage {
 		display: flex;
