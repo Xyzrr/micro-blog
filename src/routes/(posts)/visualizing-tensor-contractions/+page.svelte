@@ -8,92 +8,86 @@
 <h1>Visualizing tensor contractions</h1>
 <div class="opacity-60 mb-8">June 2026</div>
 <p>
-	There's a <a href="http://matrixmultiplication.xyz/" target="_blank">lovely little site</a> that animates
-	matrix multiplication: two grids of numbers slide past each other, rows sweep across columns, and the
-	products drop neatly into place. This is how I've always visualized matrix multiplication.
+	I tend to think in animations. It's served me well for most of math and physics, but when I started
+	writing PyTorch code, I noticed myself struggling to visualize things.
 </p>
 <p>
-	I only recently realized how harmful this picture is when writing ML code. It puts the numbers
-	front and center, when the numbers are exactly the part you never think about. What you actually
-	reason about is <em>axes</em>: which axis is the batch, which is the channel, which two are about to
-	get contracted together, and what shape falls out the other end. The grid-of-numbers picture hides
-	all of that. It also quietly trains you to think "multiplication of two matrices," so the moment you
-	hit a batched matmul or an attention score, your mental model has nothing to say.
+	I realized there was one particular visualization holding me back. Since high school, I've had <a href="http://matrixmultiplication.xyz/" target="_blank">this
+	visual</a> of matrix multiplication in my head, with one matrix rotating and sliding through the
+	other. I gravitated towards it because it felt like it let me reuse my physical intuition for rotating
+	and moving objects. I now realize this has been net harmful; it's made visualizing matmuls more mentally taxing than it needs to be, and it suggests physical metaphors that don't really
+	apply.
 </p>
 <p>
-	So here's a different picture, built around axes instead of numbers. The numbers are demoted to
-	faint gray dots; the loud, colored, labeled things are the axes, because they're what you care
-	about. Here's plain matrix multiplication, written as the einsum <code>ij,jk-&gt;ik</code>:
+	I now have a new animation in my head for matrix multiplication, and I thought it might be helpful
+	to share it with you. It focuses not on the numbers, which you generally don't think about when
+	writing ML code, and instead on the axes. In particular, it illustrates axes
+	contracting away.
 </p>
 
 <EinsumViz expr="ij,jk->ik" />
 
-<p>Every contraction, this one included, plays out as the same four steps:</p>
-<ol>
-	<li>
-		<strong>Squeeze.</strong> The axis being contracted (the letter that appears in both inputs but not
-		the output, here <em>j</em>) gets compressed away. The dots don't vanish; they pile into a little
-		gray tick at each surviving position, turning a matrix into a vector-of-vectors.
-	</li>
-	<li>
-		<strong>Arrange.</strong> The surviving axes orient themselves into the output frame: <em>i</em>
-		down, <em>k</em> across.
-	</li>
-	<li><strong>Broadcast.</strong> Each compressed vector is copied out to every cell it feeds.</li>
-	<li>
-		<strong>Dot product.</strong> At each cell, the two vectors that arrived combine. The zoom on the
-		right magnifies cell (0,0): the two vectors reorient to line up, multiply element-wise, and sum
-		into a single number.
-	</li>
-</ol>
 <p>
-	None of this is new information about matmul. But once the operation is "contract the shared axis,"
-	the cases that used to feel like separate spells become the same thing. The clearest payoff is
-	attention.
+	The way to read it: the shared axis <em>j</em> (the one that appears in both inputs but not the
+	output) gets squeezed away. Its dots don't disappear; they compress into a little tick at each
+	surviving position, turning each matrix into a vector-of-vectors. The remaining axes settle into the
+	output grid, each compressed vector is copied out to the cells it feeds, and at every cell the two
+	vectors that arrive line up and collapse into a single dot product, magnified on the right.
 </p>
 
-<h2>Attention scores</h2>
+<p>
+	A strength of this visualization is that it generalizes to other types of tensor contractions and maps naturally to einsum. For
+	example, here's an outer product, <code>i,j-&gt;ij</code>, which takes two vectors and fans them out
+	into a full grid:
+</p>
+
+<EinsumViz expr="i,j->ij" />
+
+<p>
+	This is the degenerate case where there's no shared axis to squeeze at all. Nothing gets contracted;
+	each value of one vector is simply broadcast against each value of the other, so the "dot product" at
+	every cell is just a product of two single numbers. (At the opposite extreme, a plain dot product is
+	the case where every axis gets squeezed away.)
+</p>
+
+<h2>Attention</h2>
+<p>
+	Now here are some examples of the visualization applied to the attention mechanism in transformers,
+	where I find it particularly illuminating.
+</p>
 <p>
 	In a transformer, every token carries a <em>query</em> vector and a <em>key</em> vector, each of
-	length <em>d</em> (the head dimension). The attention score between two tokens is the dot product
-	of one token's query with another's key. Do that for every pair and you get a grid of scores: one
-	number for each (query, key) combination.
-</p>
-<p>
-	That is exactly a contraction over the head dimension, <code>id,jd-&gt;ij</code>. Watch which axis
-	gets squeezed:
+	length <em>d</em> (the head dimension). The attention score between two tokens is the dot product of
+	one token's query with another's key. Do that for every pair and you get a grid of scores, which is
+	exactly a contraction over the head dimension, <code>id,jd-&gt;ij</code>:
 </p>
 
-<EinsumViz expr="id,jd->ij" labels={{ i: 'query', j: 'key', d: 'head' }} />
+<EinsumViz expr="id,jd->ij" labels={{ i: 'query', j: 'key', d: 'head' }} vectors="d" />
 
 <p>
-	The head dimension <em>d</em> is the axis that disappears. It gets summed away, and what's left is a
-	query-by-key grid: the attention matrix. This is where I find the picture most useful. The thing
-	you actually care about is "a score for every pair of tokens," and the animation shows precisely
-	that grid being assembled, with the head dimension collapsing into each dot product. The numbers
-	never mattered; the surviving axes are the whole story.
+	The colored lines trace the actual query and key vectors. The head dimension <em>d</em> is the axis
+	that disappears: each query vector dots against each key vector, the head dimension collapses, and
+	what survives is a query-by-key grid, the attention matrix. The thing you actually care about is "a
+	score for every pair of tokens," and the animation builds precisely that grid.
 </p>
-
-<h2>From scores to outputs</h2>
 <p>
 	The second half of attention uses those scores to mix the <em>value</em> vectors. Each output token
 	is a weighted blend of all the value vectors, weighted by how much that query attends to each key.
-	That's another contraction, this time over the key positions <em>j</em>:
-	<code>ij,jd-&gt;id</code>, scores times values.
+	That's another contraction, this time over the key positions <em>j</em>, <code>ij,jd-&gt;id</code>:
 </p>
 
-<EinsumViz expr="ij,jd->id" labels={{ i: 'query', j: 'key', d: 'value' }} />
+<EinsumViz expr="ij,jd->id" labels={{ i: 'query', j: 'key', d: 'value' }} vectors="d" />
 
 <p>
-	Now the contracted axis is <em>j</em>, the key positions. For each query <em>i</em> and each value
-	dimension <em>d</em>, you take that query's row of scores and dot it against that dimension's column
-	of values, a weighted sum over every token. Out comes one fresh vector per query. The squeezed axis
-	is the set of tokens you're summing over, which is exactly the right intuition: attention is a
-	weighted average across the sequence.
+	Here the lines trace the value vectors, and the axis getting squeezed is <em>j</em>, the key
+	positions. For each query you end up with a weighted average of all the value vectors, where the
+	weights are that query's attention scores. The part I like is that the axis being squeezed is
+	literally the set of tokens you're averaging over.
 </p>
 <p>
-	Two contractions, back to back, and that's the whole attention block. Once you see the shared axis
-	get squeezed and the surviving axes snap into the output frame, batched matmuls, attention, and
-	whatever else stop being separate tricks. They're all the same move: find the shared axis, and
-	contract it away.
+	I'm frankly not sure whether this animation is helpful for many people, it might be only for unusually animation-driven brains.
+	But I find that it leads to much more correct intuitions on the ways you manipulate tensors. The rotate-and-slide matmul visual
+	makes me think that matrices are things that you often want to rotate. But in fact, you almost never rotate matrices. Tranposing
+	is a much more common operation, and I think transposing feels more natural in this axis-centric representation of tensors.
+	I hope some other person out there also finds that this visual reduces mental load when dealing with tensors.
 </p>

@@ -216,9 +216,9 @@ interface Phase {
 const PHASES: Phase[] = [
 	{ key: 'intro', dur: 0.08 },
 	{ key: 'squeeze', dur: 0.22 },
-	{ key: 'arrange', dur: 0.15 },
-	{ key: 'broadcast', dur: 0.15 },
-	{ key: 'resolve', dur: 0.4 }
+	{ key: 'arrange', dur: 0.17 },
+	{ key: 'broadcast', dur: 0.22 },
+	{ key: 'resolve', dur: 0.31 }
 ];
 
 function phaseBounds(key: string): [number, number] {
@@ -265,6 +265,15 @@ export interface Axis {
 	lx: number;
 	ly: number;
 }
+export interface VLine {
+	key: string;
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	color: string;
+	opacity: number;
+}
 export interface MagState {
 	active: boolean;
 	label: string;
@@ -277,6 +286,7 @@ export interface Scene {
 	phase: string;
 	caption: string;
 	axes: Axis[];
+	vectorLines: VLine[];
 	dots: Dot[];
 	highlight: { x: number; y: number; r: number; opacity: number } | null;
 	mag: MagState;
@@ -339,7 +349,8 @@ const keyOf = (idx: Idx): string =>
 export function sample(
 	model: Model,
 	progress: number,
-	labels: Record<string, string> = {}
+	labels: Record<string, string> = {},
+	vectors = ''
 ): Scene {
 	const { spec, colors, aSqueezed, bSqueezed, contracted, outOrigin } = model;
 	const labelOf = (l: string): string => labels[l] ?? l;
@@ -448,6 +459,33 @@ export function sample(
 		});
 	}
 
+	// base-vector lines: connect the dots that form a meaningful vector (e.g. a
+	// query/key/value vector along a feature axis) so they read as one unit.
+	const vectorLines: VLine[] = [];
+	if (vectors && srcOpacity > 0.01) {
+		const sz = sizeOf(vectors);
+		if (sz >= 2) {
+			(['a', 'b'] as const).forEach((op) => {
+				const letters = lettersOf(op);
+				if (!letters.includes(vectors)) return;
+				const others = letters.filter((l) => l !== vectors);
+				for (const oc of combos(others)) {
+					const p0 = srcPos(op, { ...oc, [vectors]: 0 });
+					const p1 = srcPos(op, { ...oc, [vectors]: sz - 1 });
+					vectorLines.push({
+						key: `v-${op}-${keyOf(oc)}`,
+						x1: p0.x,
+						y1: p0.y,
+						x2: p1.x,
+						y2: p1.y,
+						color: colors.get(vectors) as string,
+						opacity: srcOpacity * 0.45
+					});
+				}
+			});
+		}
+	}
+
 	// contributions: compressed vectors broadcast to each output cell, then the
 	// same reorient -> multiply -> sum that the magnifier shows, run on every
 	// cell simultaneously.
@@ -524,7 +562,7 @@ export function sample(
 	// --- caption ---
 	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
 
-	return { phase, caption, axes, dots, highlight, mag };
+	return { phase, caption, axes, vectorLines, dots, highlight, mag };
 }
 
 function captionFor(
@@ -585,8 +623,8 @@ function sampleMag(
 	const dirB = unit(DIRS[slotB] ?? { x: 1, y: 0 });
 
 	const cx = MAG.w / 2;
-	const cy = 102;
-	const mx = Math.min(24, (MAG.w - 44) / Math.max(K, 1));
+	const cy = 95;
+	const mx = Math.min(22, (MAG.w - 56) / Math.max(K, 1));
 	const off = (i: number) => (i - (K - 1) / 2) * mx;
 	const rowGap = 18;
 

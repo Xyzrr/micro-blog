@@ -4,6 +4,7 @@
 
 	export let expr = 'ij,jk->ik';
 	export let labels: Record<string, string> = {};
+	export let vectors = '';
 
 	const DURATION = 15000; // ms for a full play-through
 
@@ -15,7 +16,7 @@
 	let container: HTMLDivElement;
 
 	$: model = buildModel(expr);
-	$: scene = sample(model, progress, labels);
+	$: scene = sample(model, progress, labels, vectors);
 	$: uid = expr.replace(/[^a-z0-9]/gi, '_');
 
 	function frame(t: number) {
@@ -127,6 +128,19 @@
 				>
 			{/each}
 
+			{#each scene.vectorLines as v (v.key)}
+				<line
+					x1={v.x1}
+					y1={v.y1}
+					x2={v.x2}
+					y2={v.y2}
+					stroke={v.color}
+					stroke-width="6"
+					stroke-linecap="round"
+					opacity={v.opacity}
+				/>
+			{/each}
+
 			{#if scene.highlight}
 				<circle
 					cx={scene.highlight.x}
@@ -151,36 +165,50 @@
 			role="img"
 			aria-label="dot product detail"
 		>
+			<defs>
+				<clipPath id={`lens-${uid}`}>
+					<circle cx={MAG.w / 2} cy="95" r="72" />
+				</clipPath>
+			</defs>
 			{#if scene.mag.active}
-				<text x={MAG.w / 2} y="20" fill="#86848a" font-size="10" text-anchor="middle"
-					>zoom: output cell</text
-				>
+				<circle cx={MAG.w / 2} cy="95" r="72" fill="rgb(247, 247, 248)" />
+				<g clip-path={`url(#lens-${uid})`}>
+					{#each scene.mag.aDots as d (d.key)}
+						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
+					{/each}
+					{#each scene.mag.bDots as d (d.key)}
+						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
+					{/each}
+					{#each scene.mag.prodDots as d (d.key)}
+						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
+					{/each}
+					{#if scene.mag.sumDot}
+						<circle
+							cx={scene.mag.sumDot.x}
+							cy={scene.mag.sumDot.y}
+							r={scene.mag.sumDot.r}
+							fill={scene.mag.sumDot.fill}
+							opacity={scene.mag.sumDot.opacity}
+						/>
+					{/if}
+				</g>
+				<circle
+					cx={MAG.w / 2}
+					cy="95"
+					r="72"
+					fill="none"
+					stroke="#403e43"
+					stroke-width="1.5"
+					opacity="0.5"
+				/>
 				<text
 					x={MAG.w / 2}
-					y="38"
+					y="188"
 					fill="#403e43"
 					font-size="12"
 					font-style="italic"
 					text-anchor="middle">{scene.mag.label}</text
 				>
-				{#each scene.mag.aDots as d (d.key)}
-					<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-				{/each}
-				{#each scene.mag.bDots as d (d.key)}
-					<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-				{/each}
-				{#each scene.mag.prodDots as d (d.key)}
-					<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
-				{/each}
-				{#if scene.mag.sumDot}
-					<circle
-						cx={scene.mag.sumDot.x}
-						cy={scene.mag.sumDot.y}
-						r={scene.mag.sumDot.r}
-						fill={scene.mag.sumDot.fill}
-						opacity={scene.mag.sumDot.opacity}
-					/>
-				{/if}
 			{/if}
 		</svg>
 	</div>
@@ -222,9 +250,7 @@
 <style>
 	.viz {
 		margin: 24px 0;
-		padding: 14px;
-		background: rgb(238, 238, 240);
-		border-radius: 8px;
+		padding: 14px 0;
 	}
 	.stage {
 		display: flex;
@@ -237,10 +263,9 @@
 		height: 280px;
 	}
 	.mag {
-		flex: 0 0 130px;
-		width: 130px;
+		flex: 0 0 140px;
+		width: 140px;
 		height: 280px;
-		border-left: 1px solid rgb(220, 218, 223);
 	}
 	.caption {
 		margin-top: 8px;
@@ -279,11 +304,9 @@
 			flex-direction: column;
 		}
 		.mag {
-			flex: 0 0 150px;
+			flex: 0 0 170px;
 			width: 100%;
-			height: 150px;
-			border-left: none;
-			border-top: 1px solid rgb(220, 218, 223);
+			height: 170px;
 		}
 		.main {
 			height: 240px;
