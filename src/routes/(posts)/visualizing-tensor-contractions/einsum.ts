@@ -186,6 +186,8 @@ export interface Model {
 	outCells: Idx[];
 	contractCombos: Idx[];
 	K: number;
+	phases: PhaseInfo[];
+	durationMs: number;
 }
 
 function colorMap(spec: Spec): Map<string, string> {
@@ -226,6 +228,11 @@ export function buildModel(raw: string): Model {
 	const aSqueezed = spec.a.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redA');
 	const bSqueezed = spec.b.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redB');
 	const K = contracted.reduce((p, l) => p * sizeOf(l), 1);
+	// an operand broadcasts only if some output axis is missing from it; when
+	// neither does, every pile feeds exactly one cell and there is no copy step
+	const hasBroadcast =
+		spec.out.some((l) => !spec.a.includes(l)) || spec.out.some((l) => !spec.b.includes(l));
+	const { phases, durationMs } = buildPhases(aSqueezed.length + bSqueezed.length > 0, hasBroadcast);
 	return {
 		raw,
 		spec,
@@ -241,7 +248,9 @@ export function buildModel(raw: string): Model {
 		bDots: combos(spec.b),
 		outCells: combos(spec.out),
 		contractCombos: combos(contracted),
-		K
+		K,
+		phases,
+		durationMs
 	};
 }
 
@@ -251,6 +260,11 @@ interface Phase {
 	key: string;
 	dur: number;
 }
+// Base phase weights. Phases that don't apply to a given einsum are dropped
+// from the model's timeline entirely (see buildPhases), so e.g. an outer
+// product never sits through an empty "contract" step, and a hadamard or
+// sum-of-all-products never pretends to "broadcast" piles that each feed
+// exactly one cell.
 const PHASES: Phase[] = [
 	{ key: 'intro', dur: 0.07 },
 	{ key: 'squeeze', dur: 0.16 },
@@ -258,6 +272,48 @@ const PHASES: Phase[] = [
 	{ key: 'broadcast', dur: 0.17 },
 	{ key: 'resolve', dur: 0.45 }
 ];
+const PHASE_LABELS: Record<string, string> = {
+	intro: 'inputs',
+	squeeze: 'contract',
+	arrange: 'arrange',
+	broadcast: 'broadcast',
+	resolve: 'multiply + sum'
+};
+// Per-phase pacing stays constant: a model with fewer phases plays for less
+// wall-clock time rather than stretching its remaining phases out.
+const BASE_MS = 11000;
+
+export interface PhaseInfo {
+	key: string;
+	label: string;
+	start: number;
+	end: number;
+}
+
+function buildPhases(
+	hasSqueeze: boolean,
+	hasBroadcast: boolean
+): {
+	phases: PhaseInfo[];
+	durationMs: number;
+} {
+	const included = PHASES.filter(
+		(p) => (p.key !== 'squeeze' || hasSqueeze) && (p.key !== 'broadcast' || hasBroadcast)
+	);
+	const total = included.reduce((s, p) => s + p.dur, 0);
+	let acc = 0;
+	const phases = included.map((p) => {
+		const info = {
+			key: p.key,
+			label: PHASE_LABELS[p.key] ?? p.key,
+			start: acc / total,
+			end: (acc + p.dur) / total
+		};
+		acc += p.dur;
+		return info;
+	});
+	return { phases, durationMs: Math.round(BASE_MS * total) };
+}
 
 // Sub-stages of resolve: collapse solo-summed axes -> align the piles ->
 // multiply pairwise -> sum. The collapse window is skipped entirely when
@@ -273,48 +329,16 @@ function resolveStages(model: Model, r: number) {
 	return { cl: win(w.cl), ro: win(w.ro), mp: win(w.mp), sm: win(w.sm), hasSolo };
 }
 
-export interface PhaseInfo {
-	key: string;
-	label: string;
-	start: number;
-	end: number;
+// A skipped phase reads as already complete, so anything keyed off its local
+// progress (squeeze scaling, fades) sits at its final state.
+function localRaw(phases: PhaseInfo[], progress: number, key: string): number {
+	const p = phases.find((x) => x.key === key);
+	if (!p) return 1;
+	return clamp((progress - p.start) / (p.end - p.start), 0, 1);
 }
-// Exposed so the interactive playground can render clickable step chips.
-export const PHASE_INFO: PhaseInfo[] = (() => {
-	const labels: Record<string, string> = {
-		intro: 'inputs',
-		squeeze: 'contract',
-		arrange: 'arrange',
-		broadcast: 'broadcast',
-		resolve: 'multiply + sum'
-	};
-	let s = 0;
-	return PHASES.map((p) => {
-		const info = { key: p.key, label: labels[p.key] ?? p.key, start: s, end: s + p.dur };
-		s += p.dur;
-		return info;
-	});
-})();
-
-function phaseBounds(key: string): [number, number] {
-	let start = 0;
-	for (const p of PHASES) {
-		if (p.key === key) return [start, start + p.dur];
-		start += p.dur;
-	}
-	return [0, 1];
-}
-function localRaw(progress: number, key: string): number {
-	const [s, e] = phaseBounds(key);
-	return clamp((progress - s) / (e - s), 0, 1);
-}
-function currentPhase(progress: number): string {
-	let start = 0;
-	for (const p of PHASES) {
-		if (progress < start + p.dur) return p.key;
-		start += p.dur;
-	}
-	return PHASES[PHASES.length - 1].key;
+function currentPhase(phases: PhaseInfo[], progress: number): string {
+	for (const p of phases) if (progress < p.end) return p.key;
+	return phases[phases.length - 1].key;
 }
 
 // --- sampled scene ----------------------------------------------------------
@@ -433,11 +457,16 @@ export function sample(
 	const { spec, colors, aSqueezed, bSqueezed, contracted, outOrigin } = model;
 	const labelOf = (l: string): string => labels[l] ?? l;
 
-	const squeezeT = easeInOut(localRaw(progress, 'squeeze'));
-	const arrangeT = easeInOut(localRaw(progress, 'arrange'));
-	const bcastRaw = localRaw(progress, 'broadcast');
-	const resolveRaw = localRaw(progress, 'resolve');
-	const phase = currentPhase(progress);
+	const squeezeT = easeInOut(localRaw(model.phases, progress, 'squeeze'));
+	const arrangeT = easeInOut(localRaw(model.phases, progress, 'arrange'));
+	const resolveRaw = localRaw(model.phases, progress, 'resolve');
+	const phase = currentPhase(model.phases, progress);
+	// With no broadcast step, the lens and highlight fade in over the tail of
+	// arrange instead, as the piles settle into their cells.
+	const hasBroadcast = model.phases.some((p) => p.key === 'broadcast');
+	const bcastRaw = hasBroadcast
+		? localRaw(model.phases, progress, 'broadcast')
+		: clamp((localRaw(model.phases, progress, 'arrange') - 0.75) / 0.25, 0, 1);
 
 	// Resolve happens for every cell at once: collapse solo sums -> align the
 	// piles -> multiply -> sum.
@@ -466,17 +495,16 @@ export function sample(
 	};
 	// Operands park just outside the output grid, like row/column headers: one
 	// step out along every output direction they lack, which lands their piles
-	// right on the corresponding output axis line. If an operand lacks nothing
-	// (e.g. hadamard), nudge the two sideways so they don't overlap each other.
+	// right on the corresponding output axis line. An operand that lacks nothing
+	// has no broadcasting to do — its piles land directly in their cells, on the
+	// same diagonal offset the resolve step uses, so the two operands interleave.
 	const lacksOf = (op: 'a' | 'b') => spec.out.filter((l) => !lettersOf(op).includes(l));
+	const cellSideOff = (op: 'a' | 'b'): Vec => (op === 'a' ? { x: -5, y: -3.4 } : { x: 5, y: 3.4 });
 	const marginFor = (op: 'a' | 'b'): Vec => {
 		const lacks = lacksOf(op);
+		if (!lacks.length) return cellSideOff(op);
 		let m: Vec = { x: 0, y: 0 };
 		for (const l of lacks) m = add(m, mul(DIRS[spec.out.indexOf(l)], -U));
-		if (!lacks.length) {
-			const spareDir = DIRS[spec.out.length <= 1 ? 1 : 2];
-			m = mul(spareDir, (op === 'a' ? -1 : 1) * 0.3 * U);
-		}
 		return m;
 	};
 	const margins = { a: marginFor('a'), b: marginFor('b') };
@@ -614,7 +642,7 @@ export function sample(
 			const opGap = op === 'a' ? -GRID_GAP : GRID_GAP;
 			// the two piles sit diagonally offset within a cell rather than both
 			// centered on it, so they read as two arrivals instead of one cross
-			const sideOff: Vec = op === 'a' ? { x: -5, y: -3.4 } : { x: 5, y: 3.4 };
+			const sideOff = cellSideOff(op);
 			const squeezed = squeezedOf(op);
 			const solo = squeezed.filter((l) => !contracted.includes(l));
 			const pileCombos = combos(squeezed);
@@ -623,6 +651,10 @@ export function sample(
 			// stagger copies so they sweep across the grid along the directions
 			// this operand broadcasts over, instead of all arriving at once
 			const lacks = lacksOf(op);
+			// an operand with nothing to broadcast over never emits copies: its
+			// source piles already sit in their cells, and only get replaced by
+			// these working dots once resolve starts (a seamless crossfade)
+			const opBroadcasts = lacks.length > 0;
 			const stagDen = lacks.reduce((s, l) => s + (sizeOf(l) - 1), 0);
 			model.outCells.forEach((cell, ci) => {
 				const center = outFramePoint(cell);
@@ -630,6 +662,7 @@ export function sample(
 				const tCell = easeInOut(clamp((bcastRaw - 0.35 * stag) / 0.6, 0, 1));
 				const cellFade = depthFade(spec.out, cell);
 				pileCombos.forEach((pix) => {
+					if (!opBroadcasts && phase !== 'resolve') return;
 					// kept indices this operand reads from the cell + its pile indices
 					const merged: Idx = { ...pix };
 					opLetters.forEach((l) => {
@@ -650,6 +683,8 @@ export function sample(
 						p = lerpV(p, par, ro);
 						pos = lerpV(p, add(center, parOff(qi)), mp);
 						opac = (1 - mp) * cellFade;
+						// crossfade in over the source piles as they fade out
+						if (!opBroadcasts) opac *= smooth(resolveRaw / 0.35);
 					} else {
 						const start = arrangedPos(op, merged);
 						pos = lerpV(start, real, tCell);
@@ -698,7 +733,7 @@ export function sample(
 	const repIdx = 0;
 	let highlight: Scene['highlight'] = null;
 	const connectors: VLine[] = [];
-	if (phase === 'resolve' || phase === 'broadcast') {
+	if (bcastRaw > 0.01 || phase === 'resolve') {
 		const c = outFramePoint(model.outCells[repIdx]);
 		const vis = smooth(bcastRaw / 0.3);
 		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 * vis };
@@ -749,14 +784,16 @@ function captionFor(phase: string, model: Model): string {
 			if (solo.length)
 				return `${solo.join(', ')} doesn't appear in the output, so it sums away into a pile.`;
 			return 'Nothing to contract here — every axis survives.';
-		case 'arrange':
-			return model.spec.out.length
-				? 'Arrange the surviving axes into the output frame.'
-				: 'No axes survive — the output will be a single number.';
+		case 'arrange': {
+			const direct = !model.phases.some((p) => p.key === 'broadcast');
+			if (!model.spec.out.length)
+				return 'No axes survive — both piles land on the single output cell.';
+			return direct
+				? 'Arrange the surviving axes into the output frame; every pile lands directly in its cell.'
+				: 'Arrange the surviving axes into the output frame.';
+		}
 		case 'broadcast':
-			return cells > 1
-				? 'Each compressed pile is copied out to every output cell it feeds.'
-				: 'Both compressed piles head to the single output cell.';
+			return 'Each compressed pile is copied out to every output cell it feeds.';
 		case 'resolve': {
 			const at = cells > 1 ? 'At every cell, ' : '';
 			const body =

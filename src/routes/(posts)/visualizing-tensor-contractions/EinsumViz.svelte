@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { buildModel, sample, validateEinsum, PRESETS, PHASE_INFO, VIEW, LENS } from './einsum';
+	import { buildModel, sample, validateEinsum, PRESETS, VIEW, LENS } from './einsum';
 
 	export let expr = 'ij,jk->ik';
 	export let labels: Record<string, string> = {};
@@ -10,8 +10,6 @@
 
 	let draft = expr;
 	let error = '';
-
-	const DURATION = 11000; // ms for a full play-through
 
 	let progress = 0;
 	let playing = false;
@@ -29,7 +27,7 @@
 		const dt = t - last;
 		last = t;
 		if (playing) {
-			progress += dt / DURATION;
+			progress += dt / model.durationMs;
 			if (progress >= 1) {
 				progress = 1;
 				playing = false;
@@ -343,7 +341,7 @@
 	</div>
 	{#if interactive}
 		<div class="chips">
-			{#each PHASE_INFO as p (p.key)}
+			{#each model.phases as p (p.key)}
 				<button
 					class="chip"
 					class:active={scene.phase === p.key}

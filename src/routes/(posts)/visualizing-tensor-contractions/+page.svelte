@@ -21,18 +21,17 @@
 <p>
 	I now have a new animation in my head for matrix multiplication, and I thought it might be helpful
 	to share it with you. It focuses not on the numbers, which you generally don't think about when
-	writing ML code, and instead on the axes. In particular, it illustrates axes
+	writing ML code, but instead on the axes. In particular, it illustrates axes
 	contracting away.
 </p>
 
 <EinsumViz expr="ij,jk->ik" />
 
 <p>
-	The way to read it: the shared axis <em>j</em> (the one that appears in both inputs but not the
-	output) gets squeezed away. Its dots don't disappear; they compress into a little tick at each
-	surviving position, turning each matrix into a vector-of-vectors. The remaining axes settle into the
-	output grid, each compressed vector is copied out to the cells it feeds, and at every cell the two
-	vectors that arrive line up and collapse into a single dot product, magnified on the right.
+	The one non-obvious move: when the shared axis <em>j</em> (the one that appears in both inputs but
+	not the output) gets squeezed away, its dots don't disappear — they compress into a little pile at
+	each surviving position. Those piles then meet in the output grid, where each pair lines up and
+	collapses into a dot product, magnified on the right.
 </p>
 
 <p>
@@ -52,7 +51,10 @@
 
 <p>
 	Here's a playground if you want to poke at other contractions yourself. Type any einsum with two
-	inputs of up to rank 3 each, or pick a preset, and click a step to jump to it:
+	inputs of up to rank 3 each, or pick a preset, and click a step to jump to it. It starts on a
+	batched matmul, <code>bij,bjk-&gt;bik</code>, which is where the rotate-and-slide picture quietly
+	dies: there's nothing sensible to rotate. The axis view doesn't even notice the extra rank;
+	<em>b</em> is just one more axis that survives to the output:
 </p>
 
 <EinsumViz interactive expr="bij,bjk->bik" />
@@ -83,6 +85,13 @@
 	place, but that rule isn't really relevant here. It's more natural to think of this as one operation, just contracting an axis.
 </p>
 <p>
+	This is also the heart of my complaint with the rotate-and-slide visual: it puts rotating at the
+	center of the story, and physically rotating an array is not something you ever do to a tensor.
+	Transposing is — and in the axis-centric picture, a transpose stops being a motion at all.
+	<code>id</code> versus <code>di</code> is just a relabeling of which axis is which; nothing has to
+	move.
+</p>
+<p>
 	The second half of attention uses those scores to mix the <em>value</em> vectors. Each output token
 	is a weighted blend of all the value vectors, weighted by how much that query attends to each key.
 	That's another contraction, this time over the key positions <em>j</em>, <code>ij,jd-&gt;id</code>:
@@ -97,9 +106,8 @@
 	literally the set of tokens you're averaging over.
 </p>
 <p>
-	I'm frankly not sure whether this animation is helpful for many people, it might be only for unusually animation-driven brains.
-	But I find that it leads to much more correct intuitions on the ways you manipulate tensors. The rotate-and-slide matmul visual
-	makes me think that matrices are things that you often want to rotate. But in fact, you almost never rotate matrices. Transposing
-	is a much more common operation, and I think transposing feels more natural in this axis-centric representation of tensors.
-	I hope some other person out there also finds that this visual reduces mental load when dealing with tensors.
+	I'm frankly not sure whether this animation is helpful for many people; it might be only for
+	unusually animation-driven brains. But it has given me noticeably more correct instincts for
+	manipulating tensors, and I hope some other person out there finds that it reduces their mental
+	load too.
 </p>
