@@ -13,7 +13,7 @@
 </p>
 <p>
 	Thinking in animations became a real liability when I started writing PyTorch code. I probably should have tried harder to switch to symbols,
-	but ML code sits right at the edge of visualizability: the tensors are low-rank enough that you <em>could</em> picture everything — it's just hard.
+	but ML code sits right at the edge of visualizability: the tensors are low-rank enough that you <em>could</em> picture everything with enough effort.
 </p>
 <p>
 	So instead I thought about how I could improve my visuals, and I realized that one particular animation ingrained deep in my brain was holding me back. 
@@ -56,10 +56,7 @@
 
 <p>
 	Here's a playground if you want to poke at other contractions yourself. Type any einsum with two
-	inputs of up to rank 3 each, or pick a preset, and click a step to jump to it. It starts on a
-	batched matmul, <code>bij,bjk-&gt;bik</code>, which is where the rotate-and-slide picture quietly
-	dies: there's nothing sensible to rotate. The axis view doesn't even notice the extra rank;
-	<em>b</em> is just one more axis that survives to the output:
+	inputs of up to rank 3 each, or pick a preset.
 </p>
 
 <EinsumViz interactive expr="bij,bjk->bik" />
