@@ -21,7 +21,7 @@
 	visual</a> of matrix multiplication in my head, with one matrix rotating and sliding through the
 	other. I gravitated towards it because it felt like it let me reuse my physical intuition for rotating
 	and moving objects. I now realize this has been net harmful; it's made visualizing matmuls more mentally taxing than it needs to be, and it suggests physical metaphors that don't really
-	apply, which I'll get into later.
+	apply.
 </p>
 <p>
 	I now have a new animation in my head for matrix multiplication, and I thought it might be helpful
