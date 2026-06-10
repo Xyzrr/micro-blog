@@ -27,6 +27,7 @@ export const PRESETS: Preset[] = [
 	{ label: 'dot product', expr: 'i,i->' },
 	{ label: 'outer product', expr: 'i,j->ij' },
 	{ label: 'hadamard', expr: 'ij,ij->ij' },
+	{ label: 'sum of all products', expr: 'ij,ij->' },
 	{ label: 'reduction', expr: 'ij,jk->k' },
 	{ label: 'rank-3', expr: 'ijk,ikl->ijl' }
 ];
@@ -42,8 +43,10 @@ const DIRS: Vec[] = [
 	{ x: 0.55, y: -0.42 }
 ];
 
-export const VIEW = { w: 420, h: 300 };
-export const MAG = { w: 180, h: 210 };
+export const VIEW = { w: 640, h: 260 };
+// The zoom lens lives in the same SVG as the main view, so the dashed guide
+// lines can run from the highlighted cell straight to the lens.
+export const LENS = { x: 545, y: 100, r: 72 };
 
 const SIZE_MAP: Record<string, number> = {
 	i: 3,
@@ -59,8 +62,12 @@ const SIZE_MAP: Record<string, number> = {
 const sizeOf = (l: string): number => SIZE_MAP[l] ?? 3;
 
 const PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6', '#ec4899'];
-const DOT_GRAY = '#b6b4ba';
-const RESULT_GRAY = '#86848a';
+// Dots carry a subtle cool/warm tint so you can tell which operand a dot came
+// from, all the way through broadcast and into the magnifier.
+const OP_TINT = ['#8c99ae', '#b09c89'];
+const COPY_TINT = ['#7e90af', '#ad9176'];
+const PROD_GRAY = '#6e7480';
+const RESULT_GRAY = '#555c66';
 const GHOST = '#c7c5cb';
 
 // --- small math helpers -----------------------------------------------------
@@ -108,6 +115,37 @@ export function parseEinsum(raw: string): Spec {
 	};
 }
 
+// Strict validation for the interactive playground. Returns a friendly error
+// message, or null if the expression is drawable.
+export function validateEinsum(raw: string): string | null {
+	const cleaned = raw.replace(/\s+/g, '');
+	const parts = cleaned.split('->');
+	if (parts.length !== 2) return 'Write an explicit output, e.g. ij,jk->ik';
+	const ops = parts[0].split(',');
+	if (ops.length !== 2) return 'Exactly two input tensors are supported';
+	for (const s of [...ops, parts[1]]) {
+		if (!/^[a-z]*$/.test(s)) return 'Indices must be lowercase letters';
+	}
+	const [a, b] = ops;
+	const out = parts[1];
+	if (a.length > 3 || b.length > 3)
+		return 'Inputs can be at most rank 3 — higher ranks are hard to draw';
+	if (out.length > 3) return 'The output can be at most rank 3';
+	const named: [string, string][] = [
+		['first input', a],
+		['second input', b],
+		['output', out]
+	];
+	for (const [name, s] of named) {
+		if (new Set(s).size !== s.length)
+			return `Repeated index in the ${name} — diagonals aren't supported`;
+	}
+	for (const l of out) {
+		if (!a.includes(l) && !b.includes(l)) return `Output index "${l}" doesn't appear in any input`;
+	}
+	return null;
+}
+
 export function classify(spec: Spec): Map<string, Role> {
 	const inA = new Set(spec.a);
 	const inB = new Set(spec.b);
@@ -148,6 +186,8 @@ export interface Model {
 	outCells: Idx[];
 	contractCombos: Idx[];
 	K: number;
+	phases: PhaseInfo[];
+	durationMs: number;
 }
 
 function colorMap(spec: Spec): Map<string, string> {
@@ -188,6 +228,11 @@ export function buildModel(raw: string): Model {
 	const aSqueezed = spec.a.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redA');
 	const bSqueezed = spec.b.filter((l) => roleOf(l) === 'contracted' || roleOf(l) === 'redB');
 	const K = contracted.reduce((p, l) => p * sizeOf(l), 1);
+	// an operand broadcasts only if some output axis is missing from it; when
+	// neither does, every pile feeds exactly one cell and there is no copy step
+	const hasBroadcast =
+		spec.out.some((l) => !spec.a.includes(l)) || spec.out.some((l) => !spec.b.includes(l));
+	const { phases, durationMs } = buildPhases(aSqueezed.length + bSqueezed.length > 0, hasBroadcast);
 	return {
 		raw,
 		spec,
@@ -196,14 +241,16 @@ export function buildModel(raw: string): Model {
 		contracted,
 		aSqueezed,
 		bSqueezed,
-		aIn: centerOrigin({ x: 110, y: 150 }, spec.a),
-		bIn: centerOrigin({ x: 320, y: 150 }, spec.b),
-		outOrigin: centerOrigin({ x: 210, y: 150 }, spec.out),
+		aIn: centerOrigin({ x: 110, y: 130 }, spec.a),
+		bIn: centerOrigin({ x: 320, y: 130 }, spec.b),
+		outOrigin: centerOrigin({ x: 210, y: 130 }, spec.out),
 		aDots: combos(spec.a),
 		bDots: combos(spec.b),
 		outCells: combos(spec.out),
 		contractCombos: combos(contracted),
-		K
+		K,
+		phases,
+		durationMs
 	};
 }
 
@@ -213,33 +260,85 @@ interface Phase {
 	key: string;
 	dur: number;
 }
+// Base phase weights. Phases that don't apply to a given einsum are dropped
+// from the model's timeline entirely (see buildPhases), so e.g. an outer
+// product never sits through an empty "contract" step, and a hadamard or
+// sum-of-all-products never pretends to "broadcast" piles that each feed
+// exactly one cell.
 const PHASES: Phase[] = [
-	{ key: 'intro', dur: 0.08 },
-	{ key: 'squeeze', dur: 0.22 },
-	{ key: 'arrange', dur: 0.17 },
-	{ key: 'broadcast', dur: 0.22 },
-	{ key: 'resolve', dur: 0.31 }
+	{ key: 'intro', dur: 0.07 },
+	{ key: 'squeeze', dur: 0.16 },
+	{ key: 'arrange', dur: 0.15 },
+	{ key: 'broadcast', dur: 0.17 },
+	{ key: 'resolve', dur: 0.45 }
 ];
+const PHASE_LABELS: Record<string, string> = {
+	intro: 'inputs',
+	squeeze: 'contract',
+	arrange: 'arrange',
+	broadcast: 'broadcast',
+	resolve: 'multiply + sum'
+};
+// Per-phase pacing stays constant: a model with fewer phases plays for less
+// wall-clock time rather than stretching its remaining phases out.
+const BASE_MS = 11000;
 
-function phaseBounds(key: string): [number, number] {
-	let start = 0;
-	for (const p of PHASES) {
-		if (p.key === key) return [start, start + p.dur];
-		start += p.dur;
-	}
-	return [0, 1];
+export interface PhaseInfo {
+	key: string;
+	label: string;
+	start: number;
+	end: number;
 }
-function localRaw(progress: number, key: string): number {
-	const [s, e] = phaseBounds(key);
-	return clamp((progress - s) / (e - s), 0, 1);
+
+function buildPhases(
+	hasSqueeze: boolean,
+	hasBroadcast: boolean
+): {
+	phases: PhaseInfo[];
+	durationMs: number;
+} {
+	const included = PHASES.filter(
+		(p) => (p.key !== 'squeeze' || hasSqueeze) && (p.key !== 'broadcast' || hasBroadcast)
+	);
+	const total = included.reduce((s, p) => s + p.dur, 0);
+	let acc = 0;
+	const phases = included.map((p) => {
+		const info = {
+			key: p.key,
+			label: PHASE_LABELS[p.key] ?? p.key,
+			start: acc / total,
+			end: (acc + p.dur) / total
+		};
+		acc += p.dur;
+		return info;
+	});
+	return { phases, durationMs: Math.round(BASE_MS * total) };
 }
-function currentPhase(progress: number): string {
-	let start = 0;
-	for (const p of PHASES) {
-		if (progress < start + p.dur) return p.key;
-		start += p.dur;
-	}
-	return PHASES[PHASES.length - 1].key;
+
+// Sub-stages of resolve: collapse solo-summed axes -> align the piles ->
+// multiply pairwise -> sum. The collapse window is skipped entirely when
+// neither operand has a solo-summed axis, so the common cases stay snappy.
+function resolveStages(model: Model, r: number) {
+	const hasSolo =
+		model.aSqueezed.length > model.contracted.length ||
+		model.bSqueezed.length > model.contracted.length;
+	const w: Record<string, [number, number]> = hasSolo
+		? { cl: [0.06, 0.22], ro: [0.28, 0.48], mp: [0.54, 0.72], sm: [0.78, 0.94] }
+		: { cl: [0, 0.001], ro: [0.1, 0.34], mp: [0.45, 0.66], sm: [0.74, 0.92] };
+	const win = ([a, b]: [number, number]) => smooth((r - a) / Math.max(b - a, 1e-6));
+	return { cl: win(w.cl), ro: win(w.ro), mp: win(w.mp), sm: win(w.sm), hasSolo };
+}
+
+// A skipped phase reads as already complete, so anything keyed off its local
+// progress (squeeze scaling, fades) sits at its final state.
+function localRaw(phases: PhaseInfo[], progress: number, key: string): number {
+	const p = phases.find((x) => x.key === key);
+	if (!p) return 1;
+	return clamp((progress - p.start) / (p.end - p.start), 0, 1);
+}
+function currentPhase(phases: PhaseInfo[], progress: number): string {
+	for (const p of phases) if (progress < p.end) return p.key;
+	return phases[phases.length - 1].key;
 }
 
 // --- sampled scene ----------------------------------------------------------
@@ -277,6 +376,8 @@ export interface VLine {
 export interface MagState {
 	active: boolean;
 	label: string;
+	glyph: string; // '×' while multiplying, 'Σ' while summing
+	axes: Axis[]; // tiny colored axes showing what each pile is still indexed by
 	aDots: Dot[];
 	bDots: Dot[];
 	prodDots: Dot[];
@@ -289,6 +390,7 @@ export interface Scene {
 	vectorLines: VLine[];
 	dots: Dot[];
 	highlight: { x: number; y: number; r: number; opacity: number } | null;
+	connectors: VLine[]; // dashed guides from the highlighted cell to the lens
 	mag: MagState;
 }
 
@@ -355,19 +457,21 @@ export function sample(
 	const { spec, colors, aSqueezed, bSqueezed, contracted, outOrigin } = model;
 	const labelOf = (l: string): string => labels[l] ?? l;
 
-	const squeezeT = easeInOut(localRaw(progress, 'squeeze'));
-	const arrangeT = easeInOut(localRaw(progress, 'arrange'));
-	const broadcastT = easeInOut(localRaw(progress, 'broadcast'));
-	const bcastRaw = localRaw(progress, 'broadcast');
-	const resolveRaw = localRaw(progress, 'resolve');
-	const phase = currentPhase(progress);
+	const squeezeT = easeInOut(localRaw(model.phases, progress, 'squeeze'));
+	const arrangeT = easeInOut(localRaw(model.phases, progress, 'arrange'));
+	const resolveRaw = localRaw(model.phases, progress, 'resolve');
+	const phase = currentPhase(model.phases, progress);
+	// With no broadcast step, the lens and highlight fade in over the tail of
+	// arrange instead, as the piles settle into their cells.
+	const hasBroadcast = model.phases.some((p) => p.key === 'broadcast');
+	const bcastRaw = hasBroadcast
+		? localRaw(model.phases, progress, 'broadcast')
+		: clamp((localRaw(model.phases, progress, 'arrange') - 0.75) / 0.25, 0, 1);
 
-	// Resolve happens for every cell at once, in three slow stages:
-	// reorient the perpendicular vectors parallel -> multiply -> sum.
+	// Resolve happens for every cell at once: collapse solo sums -> align the
+	// piles -> multiply -> sum.
 	const K = Math.max(model.K, 1);
-	const ro = smooth(clamp((resolveRaw - 0.08) / 0.34, 0, 1));
-	const mp = smooth(clamp((resolveRaw - 0.46) / 0.27, 0, 1));
-	const sm = smooth(clamp((resolveRaw - 0.76) / 0.24, 0, 1));
+	const { cl, ro, mp, sm } = resolveStages(model, resolveRaw);
 
 	const squeezedOf = (op: 'a' | 'b') => (op === 'a' ? aSqueezed : bSqueezed);
 	const lettersOf = (op: 'a' | 'b') => (op === 'a' ? spec.a : spec.b);
@@ -389,8 +493,23 @@ export function sample(
 		});
 		return d;
 	};
+	// Operands park just outside the output grid, like row/column headers: one
+	// step out along every output direction they lack, which lands their piles
+	// right on the corresponding output axis line. An operand that lacks nothing
+	// has no broadcasting to do — its piles land directly in their cells, on the
+	// same diagonal offset the resolve step uses, so the two operands interleave.
+	const lacksOf = (op: 'a' | 'b') => spec.out.filter((l) => !lettersOf(op).includes(l));
+	const cellSideOff = (op: 'a' | 'b'): Vec => (op === 'a' ? { x: -5, y: -3.4 } : { x: 5, y: 3.4 });
+	const marginFor = (op: 'a' | 'b'): Vec => {
+		const lacks = lacksOf(op);
+		if (!lacks.length) return cellSideOff(op);
+		let m: Vec = { x: 0, y: 0 };
+		for (const l of lacks) m = add(m, mul(DIRS[spec.out.indexOf(l)], -U));
+		return m;
+	};
+	const margins = { a: marginFor('a'), b: marginFor('b') };
 	const arrangedPos = (op: 'a' | 'b', idx: Idx): Vec =>
-		add(outFramePoint(idx), operandMicro(op, idx));
+		add(add(outFramePoint(idx), margins[op]), operandMicro(op, idx));
 	const inputPos = (op: 'a' | 'b', idx: Idx): Vec => {
 		let p = { ...originOf(op) };
 		lettersOf(op).forEach((l, slot) => {
@@ -440,10 +559,17 @@ export function sample(
 	// --- dots ---
 	const dots: Dot[] = [];
 
-	// source lattice dots (input -> squeeze -> arrange), fade out as broadcast starts
-	const srcOpacity = 1 - smooth(bcastRaw / 0.45);
+	// Dots along the depth axis get slightly fainter the further back they sit.
+	const depthFade = (letters: string[], idx: Idx): number => {
+		const dl = letters[2];
+		return dl ? 1 - 0.35 * ((idx[dl] ?? 0) / Math.max(1, sizeOf(dl) - 1)) : 1;
+	};
+
+	// source lattice dots (input -> squeeze -> arrange). They stay visible as
+	// row/column headers while their copies broadcast out, then fade at resolve.
+	const srcOpacity = 1 - smooth(resolveRaw / 0.35);
 	if (srcOpacity > 0.01) {
-		(['a', 'b'] as const).forEach((op) => {
+		(['a', 'b'] as const).forEach((op, opIdx) => {
 			const list = op === 'a' ? model.aDots : model.bDots;
 			for (const idx of list) {
 				const p = srcPos(op, idx);
@@ -451,11 +577,28 @@ export function sample(
 					key: `s-${op}-${keyOf(idx)}`,
 					x: p.x,
 					y: p.y,
-					r: 3,
-					opacity: srcOpacity,
-					fill: DOT_GRAY
+					r: lerp(3, 2.5, squeezeT),
+					opacity: srcOpacity * depthFade(lettersOf(op), idx),
+					fill: OP_TINT[opIdx]
 				});
 			}
+		});
+	}
+
+	// faint ghost dots mark the output cells once the frame assembles, until the
+	// real result dots land on top of them
+	const ghostO = smooth(arrangeT) * 0.45 * (1 - sm);
+	if (ghostO > 0.01) {
+		model.outCells.forEach((cell, ci) => {
+			const p = outFramePoint(cell);
+			dots.push({
+				key: `g-${ci}`,
+				x: p.x,
+				y: p.y,
+				r: 1.6,
+				opacity: ghostO * depthFade(spec.out, cell),
+				fill: GHOST
+			});
 		});
 	}
 
@@ -486,46 +629,75 @@ export function sample(
 		}
 	}
 
-	// contributions: compressed vectors broadcast to each output cell, then the
-	// same reorient -> multiply -> sum that the magnifier shows, run on every
-	// cell simultaneously.
-	const n = model.outCells.length;
+	// contributions: each operand's compressed pile — with its full structure,
+	// contracted AND solo-summed axes — is broadcast to each output cell, then
+	// runs the same collapse -> align -> multiply -> sum the magnifier shows,
+	// on every cell simultaneously.
 	const GRID_GAP = 5; // vertical separation of the two parallel rows in a cell
 	const inOpacity = smooth(bcastRaw / 0.45);
 	const parOff = (qi: number): Vec => ({ x: (qi - (K - 1) / 2) * MICRO, y: 0 });
 	if (inOpacity > 0.01) {
-		(['a', 'b'] as const).forEach((op) => {
+		(['a', 'b'] as const).forEach((op, opIdx) => {
 			const opLetters = lettersOf(op);
 			const opGap = op === 'a' ? -GRID_GAP : GRID_GAP;
+			// the two piles sit diagonally offset within a cell rather than both
+			// centered on it, so they read as two arrivals instead of one cross
+			const sideOff = cellSideOff(op);
+			const squeezed = squeezedOf(op);
+			const solo = squeezed.filter((l) => !contracted.includes(l));
+			const pileCombos = combos(squeezed);
+			// row slot of a pile dot's contracted part, for the multiply layout
+			const qIndex = new Map(model.contractCombos.map((q, i) => [keyOf(q), i]));
+			// stagger copies so they sweep across the grid along the directions
+			// this operand broadcasts over, instead of all arriving at once
+			const lacks = lacksOf(op);
+			// an operand with nothing to broadcast over never emits copies: its
+			// source piles already sit in their cells, and only get replaced by
+			// these working dots once resolve starts (a seamless crossfade)
+			const opBroadcasts = lacks.length > 0;
+			const stagDen = lacks.reduce((s, l) => s + (sizeOf(l) - 1), 0);
 			model.outCells.forEach((cell, ci) => {
 				const center = outFramePoint(cell);
-				model.contractCombos.forEach((q, qi) => {
-					// kept indices this operand reads from the cell + the contracted index
-					const merged: Idx = { ...q };
+				const stag = stagDen ? lacks.reduce((s, l) => s + (cell[l] ?? 0), 0) / stagDen : 0;
+				const tCell = easeInOut(clamp((bcastRaw - 0.35 * stag) / 0.6, 0, 1));
+				const cellFade = depthFade(spec.out, cell);
+				pileCombos.forEach((pix) => {
+					if (!opBroadcasts && phase !== 'resolve') return;
+					// kept indices this operand reads from the cell + its pile indices
+					const merged: Idx = { ...pix };
 					opLetters.forEach((l) => {
 						if (cell[l] !== undefined) merged[l] = cell[l];
 					});
-					const real = add(center, operandMicro(op, q)); // arrives in real orientation
+					const qPart: Idx = {};
+					contracted.forEach((l) => (qPart[l] = pix[l] ?? 0));
+					const qi = qIndex.get(keyOf(qPart)) ?? 0;
+					const real = add(add(center, sideOff), operandMicro(op, pix)); // real orientation
 					let pos: Vec;
 					let opac: number;
 					if (phase === 'resolve') {
+						const soloCentered: Idx = { ...pix };
+						for (const l of solo) soloCentered[l] = (sizeOf(l) - 1) / 2;
+						const collapsed = add(add(center, sideOff), operandMicro(op, soloCentered));
 						const par = add(add(center, parOff(qi)), { x: 0, y: opGap });
-						const re = lerpV(real, par, ro);
-						pos = lerpV(re, add(center, parOff(qi)), mp);
-						opac = 1 - mp;
+						let p = lerpV(real, collapsed, cl);
+						p = lerpV(p, par, ro);
+						pos = lerpV(p, add(center, parOff(qi)), mp);
+						opac = (1 - mp) * cellFade;
+						// crossfade in over the source piles as they fade out
+						if (!opBroadcasts) opac *= smooth(resolveRaw / 0.35);
 					} else {
 						const start = arrangedPos(op, merged);
-						pos = lerpV(start, real, broadcastT);
-						opac = inOpacity;
+						pos = lerpV(start, real, tCell);
+						opac = smooth(tCell / 0.25) * cellFade;
 					}
 					if (opac <= 0.01) return;
 					dots.push({
-						key: `c-${op}-${ci}-${keyOf(q)}`,
+						key: `c-${op}-${ci}-${keyOf(pix)}`,
 						x: pos.x,
 						y: pos.y,
-						r: 3,
+						r: 2.5,
 						opacity: opac,
-						fill: DOT_GRAY
+						fill: COPY_TINT[opIdx]
 					});
 				});
 			});
@@ -536,125 +708,242 @@ export function sample(
 	if (phase === 'resolve') {
 		model.outCells.forEach((cell, ci) => {
 			const center = outFramePoint(cell);
+			const cellFade = depthFade(spec.out, cell);
 			model.contractCombos.forEach((q, qi) => {
-				const o = mp * (1 - sm);
+				const o = mp * (1 - sm) * cellFade;
 				if (o <= 0.01) return;
 				const px = lerp(center.x + parOff(qi).x, center.x, sm);
-				dots.push({ key: `p-${ci}-${qi}`, x: px, y: center.y, r: 3, opacity: o, fill: '#9a9aa0' });
+				dots.push({ key: `p-${ci}-${qi}`, x: px, y: center.y, r: 3, opacity: o, fill: PROD_GRAY });
 			});
-			const o = smooth(sm);
+			const o = smooth(sm) * cellFade;
 			if (o > 0.01)
-				dots.push({ key: `r-${ci}`, x: center.x, y: center.y, r: 4, opacity: o, fill: RESULT_GRAY });
+				dots.push({
+					key: `r-${ci}`,
+					x: center.x,
+					y: center.y,
+					r: 4,
+					opacity: o,
+					fill: RESULT_GRAY
+				});
 		});
 	}
 
-	// highlight ring on the representative cell that the zoom is showing (0,0)
+	// highlight ring on the representative cell that the zoom is showing (0,0),
+	// with dashed guides making it clear the lens is a zoom of that cell
 	const repIdx = 0;
 	let highlight: Scene['highlight'] = null;
-	if ((phase === 'resolve' || phase === 'broadcast') && n > 1) {
+	const connectors: VLine[] = [];
+	if (bcastRaw > 0.01 || phase === 'resolve') {
 		const c = outFramePoint(model.outCells[repIdx]);
-		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 };
+		const vis = smooth(bcastRaw / 0.3);
+		highlight = { x: c.x, y: c.y, r: 15, opacity: 0.45 * vis };
+		const k = 0.707;
+		for (const s of [-1, 1]) {
+			connectors.push({
+				key: `cn-${s}`,
+				x1: c.x + 15 * k,
+				y1: c.y + s * 15 * k,
+				x2: LENS.x - LENS.r * k,
+				y2: LENS.y + s * LENS.r * k,
+				color: '#b9bbc0',
+				opacity: 0.55 * vis
+			});
+		}
 	}
 
-	// --- magnifier --- (same reorient -> multiply -> sum, zoomed in)
-	const mag = sampleMag(model, repIdx, ro, mp, sm, bcastRaw > 0.01 || phase === 'resolve', labelOf);
+	// --- magnifier --- (the same ritual, zoomed in with the piles' true structure)
+	const mag = sampleMag(
+		model,
+		resolveRaw,
+		smooth(bcastRaw / 0.5),
+		bcastRaw > 0.01 || phase === 'resolve'
+	);
 
 	// --- caption ---
-	const caption = captionFor(phase, contracted, aSqueezed, bSqueezed);
+	const caption = captionFor(phase, model);
 
-	return { phase, caption, axes, vectorLines, dots, highlight, mag };
+	return { phase, caption, axes, vectorLines, dots, highlight, connectors, mag };
 }
 
-function captionFor(
-	phase: string,
-	contracted: string[],
-	aSqueezed: string[],
-	bSqueezed: string[]
-): string {
+function captionFor(phase: string, model: Model): string {
+	const { contracted, aSqueezed, bSqueezed } = model;
+	const solo = [...aSqueezed, ...bSqueezed].filter((l) => !contracted.includes(l));
+	const cells = model.outCells.length;
 	switch (phase) {
 		case 'intro':
 			return 'Two tensors. The axes carry the meaning; the gray dots are just numbers.';
 		case 'squeeze':
-			if (contracted.length) return `Contract ${contracted.join('')}: squeeze that axis away.`;
-			if (aSqueezed.length || bSqueezed.length) return 'Reduce the summed-away axes.';
-			return 'Nothing to contract here.';
-		case 'arrange':
-			return 'Arrange the surviving axes into the output frame.';
+			if (contracted.length && solo.length)
+				return `Contract ${contracted.join(', ')}; ${solo.join(
+					', '
+				)} appears in only one input, so it simply sums away.`;
+			if (contracted.length)
+				return `Contract ${contracted.join(
+					', '
+				)}: squeeze the axis away. Its dots survive as little piles.`;
+			if (solo.length)
+				return `${solo.join(', ')} doesn't appear in the output, so it sums away into a pile.`;
+			return 'Nothing to contract here — every axis survives.';
+		case 'arrange': {
+			const direct = !model.phases.some((p) => p.key === 'broadcast');
+			if (!model.spec.out.length)
+				return 'No axes survive — both piles land on the single output cell.';
+			return direct
+				? 'Arrange the surviving axes into the output frame; every pile lands directly in its cell.'
+				: 'Arrange the surviving axes into the output frame.';
+		}
 		case 'broadcast':
-			return 'Copy each compressed vector out to every output cell.';
-		case 'resolve':
-			return contracted.length
-				? 'At each cell, take the dot product along the contracted axis.'
-				: 'At each cell, multiply the values together.';
+			return 'Each compressed pile is copied out to every output cell it feeds.';
+		case 'resolve': {
+			const at = cells > 1 ? 'At every cell, ' : '';
+			const body =
+				!contracted.length && !solo.length
+					? 'multiply the two values together.'
+					: contracted.length === 1 && !solo.length
+					? `the two piles line up for a dot product along ${contracted[0]}.`
+					: 'the piles line up, multiply pairwise, and sum into a single entry.';
+			const s = at + body;
+			return s.charAt(0).toUpperCase() + s.slice(1);
+		}
 		default:
 			return '';
 	}
 }
 
-function sampleMag(
-	model: Model,
-	repIdx: number,
-	ro: number,
-	mp: number,
-	sm: number,
-	active: boolean,
-	labelOf: (l: string) => string
-): MagState {
+function sampleMag(model: Model, resolveRaw: number, arrivalT: number, active: boolean): MagState {
 	if (!active)
-		return { active: false, label: '', aDots: [], bDots: [], prodDots: [], sumDot: null };
+		return {
+			active: false,
+			label: '',
+			glyph: '',
+			axes: [],
+			aDots: [],
+			bDots: [],
+			prodDots: [],
+			sumDot: null
+		};
 
-	const K = Math.max(model.K, 1);
-	const cell = model.outCells[repIdx] ?? {};
-	const label = model.spec.out.length
-		? model.spec.out.map((l) => `${labelOf(l)} ${cell[l] ?? 0}`).join(',  ')
-		: 'scalar';
+	const { spec, colors, contracted } = model;
+	// the lens zooms one cell, but the same thing happens everywhere at once
+	const label = model.outCells.length > 1 ? 'happening at every cell' : 'the single output value';
 
-	const cColor = model.contracted.length
-		? (model.colors.get(model.contracted[0]) as string)
-		: '#9aa0a6';
+	const { cl, ro, mp, sm } = resolveStages(model, resolveRaw);
 
-	// Each operand's compressed vector keeps the screen orientation of its own
-	// contracted axis, so two vectors that were perpendicular in the grid start
-	// out perpendicular here too. They then rotate to a common direction before
-	// the element-wise multiply.
-	const slotA = model.contracted.length ? model.spec.a.indexOf(model.contracted[0]) : 1;
-	const slotB = model.contracted.length ? model.spec.b.indexOf(model.contracted[0]) : 1;
-	const dirA = unit(DIRS[slotA] ?? { x: 1, y: 0 });
-	const dirB = unit(DIRS[slotB] ?? { x: 1, y: 0 });
+	const LC: Vec = { x: LENS.x, y: LENS.y };
+	const maxPileRank = Math.max(model.aSqueezed.length, model.bSqueezed.length);
+	const SM = maxPileRank >= 3 ? 10 : 14; // lattice spacing inside the lens
+	const alignOff: Vec = contracted.length <= 1 ? { x: 22, y: 0 } : { x: 7, y: -6 };
 
-	const cx = MAG.w / 2;
-	const cy = 95;
-	const mx = Math.min(22, (MAG.w - 56) / Math.max(K, 1));
-	const off = (i: number) => (i - (K - 1) / 2) * mx;
-	const rowGap = 18;
+	// Canonical orientation both piles rotate into before the pairwise multiply.
+	const canonRel = (ix: Idx): Vec => {
+		let p: Vec = { x: 0, y: 0 };
+		contracted.forEach((l, i) => {
+			p = add(p, mul(DIRS[i], ((ix[l] ?? 0) - (sizeOf(l) - 1) / 2) * SM));
+		});
+		return p;
+	};
 
-	const aDots: Dot[] = [];
-	const bDots: Dot[] = [];
+	// Each pile arrives with its true structure: a lattice over the operand's
+	// squeezed letters, in the same screen orientations those axes had in the
+	// grid (so matmul's two j-piles really start out perpendicular). Solo-summed
+	// axes collapse first, then the piles rotate to a common orientation.
+	const axes: Axis[] = [];
+	const buildPile = (op: 'a' | 'b', opIdx: number): Dot[] => {
+		const letters = op === 'a' ? spec.a : spec.b;
+		const squeezed = op === 'a' ? model.aSqueezed : model.bSqueezed;
+		const solo = squeezed.filter((l) => !contracted.includes(l));
+		const pileLs = [...contracted, ...solo];
+		// mirror the diagonal arrangement the piles have inside the cell
+		const center: Vec =
+			op === 'a' ? { x: LC.x - 30, y: LC.y - 17 } : { x: LC.x + 30, y: LC.y + 17 };
+		const aligned = add(LC, mul(alignOff, op === 'a' ? -0.5 : 0.5));
+		const realRel = (ix: Idx): Vec => {
+			let p: Vec = { x: 0, y: 0 };
+			for (const l of pileLs) {
+				const dir = DIRS[letters.indexOf(l)] ?? DIRS[1];
+				p = add(p, mul(dir, ((ix[l] ?? 0) - (sizeOf(l) - 1) / 2) * SM));
+			}
+			return p;
+		};
+		const collapsedRel = (ix: Idx): Vec => {
+			const c: Idx = { ...ix };
+			for (const l of solo) c[l] = (sizeOf(l) - 1) / 2;
+			return realRel(c);
+		};
+		const dots: Dot[] = [];
+		for (const ix of combos(pileLs)) {
+			let pos = add(center, realRel(ix));
+			pos = lerpV(pos, add(center, collapsedRel(ix)), cl);
+			pos = lerpV(pos, add(aligned, canonRel(ix)), ro);
+			pos = lerpV(pos, add(LC, canonRel(ix)), mp);
+			const o = arrivalT * (1 - mp);
+			if (o <= 0.01) continue;
+			dots.push({
+				key: `m${op}-${keyOf(ix)}`,
+				x: pos.x,
+				y: pos.y,
+				r: 3.5 + (solo.length ? cl * 0.4 : 0),
+				opacity: o,
+				fill: COPY_TINT[opIdx]
+			});
+		}
+		// tiny colored axes show what each pile is still indexed by; solo axes
+		// vanish when their sum collapses, shared axes when alignment starts
+		for (const l of pileLs) {
+			const n = sizeOf(l);
+			if (n < 2) continue;
+			const dir = unit(DIRS[letters.indexOf(l)] ?? DIRS[1]);
+			const others = pileLs.filter((x) => x !== l);
+			// offset the axis away from the pile: opposite the other axes if there
+			// are any, otherwise perpendicular to itself
+			let perp: Vec = mul({ x: -dir.y, y: dir.x }, 9);
+			if (others.length) {
+				let s: Vec = { x: 0, y: 0 };
+				for (const o of others) s = add(s, DIRS[letters.indexOf(o)] ?? DIRS[1]);
+				perp = mul(unit(s), -9);
+			}
+			const half = ((n - 1) / 2 + 0.35) * SM;
+			const p0 = add(add(center, mul(dir, -half)), perp);
+			const p1 = add(add(center, mul(dir, half)), perp);
+			const o = arrivalT * 0.9 * (1 - (solo.includes(l) ? cl : ro));
+			if (o <= 0.01) continue;
+			axes.push({
+				key: `max-${op}-${l}`,
+				x1: p0.x,
+				y1: p0.y,
+				x2: p1.x,
+				y2: p1.y,
+				color: colors.get(l) as string,
+				opacity: o,
+				letter: l,
+				label: l,
+				lx: p1.x + dir.x * 10,
+				ly: p1.y + dir.y * 10
+			});
+		}
+		return dots;
+	};
+	const aDots = buildPile('a', 0);
+	const bDots = buildPile('b', 1);
+
 	const prodDots: Dot[] = [];
-	for (let i = 0; i < K; i++) {
-		const aStart: Vec = { x: cx + dirA.x * off(i), y: cy + dirA.y * off(i) };
-		const aPar: Vec = { x: cx + off(i), y: cy - rowGap };
-		let a = lerpV(aStart, aPar, ro);
-		a = lerpV(a, { x: cx + off(i), y: cy }, mp);
-		aDots.push({ key: `ma-${i}`, x: a.x, y: a.y, r: 4, opacity: 1 - mp, fill: cColor });
-
-		const bStart: Vec = { x: cx + dirB.x * off(i), y: cy + dirB.y * off(i) };
-		const bPar: Vec = { x: cx + off(i), y: cy + rowGap };
-		let b = lerpV(bStart, bPar, ro);
-		b = lerpV(b, { x: cx + off(i), y: cy }, mp);
-		bDots.push({ key: `mb-${i}`, x: b.x, y: b.y, r: 4, opacity: 1 - mp, fill: cColor });
-
-		const px = lerp(cx + off(i), cx, sm);
+	for (const ix of combos(contracted)) {
+		const o = mp * (1 - sm);
+		if (o <= 0.01) continue;
+		const pos = lerpV(add(LC, canonRel(ix)), LC, sm);
 		prodDots.push({
-			key: `mp-${i}`,
-			x: px,
-			y: cy,
+			key: `mp-${keyOf(ix)}`,
+			x: pos.x,
+			y: pos.y,
 			r: 4,
-			opacity: mp * (1 - sm),
-			fill: '#6b7280'
+			opacity: o,
+			fill: PROD_GRAY
 		});
 	}
-	const sumDot: Dot = { key: 'msum', x: cx, y: cy, r: 6, opacity: sm, fill: '#403e43' };
+	const sumDot: Dot | null =
+		sm > 0.01 ? { key: 'msum', x: LC.x, y: LC.y, r: 6, opacity: sm, fill: '#403e43' } : null;
 
-	return { active: true, label, aDots, bDots, prodDots, sumDot };
+	const glyph = sm > 0.03 && model.K > 1 ? 'Σ' : mp > 0.03 ? '×' : '';
+
+	return { active: true, label, glyph, axes, aDots, bDots, prodDots, sumDot };
 }

@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { buildModel, sample, VIEW, MAG } from './einsum';
+	import { buildModel, sample, validateEinsum, PRESETS, VIEW, LENS } from './einsum';
 
 	export let expr = 'ij,jk->ik';
 	export let labels: Record<string, string> = {};
 	export let vectors = '';
+	// Adds a free-text einsum input, presets, and clickable step chips.
+	export let interactive = false;
 
-	const DURATION = 15000; // ms for a full play-through
+	let draft = expr;
+	let error = '';
 
 	let progress = 0;
 	let playing = false;
@@ -24,7 +27,7 @@
 		const dt = t - last;
 		last = t;
 		if (playing) {
-			progress += dt / DURATION;
+			progress += dt / model.durationMs;
 			if (progress >= 1) {
 				progress = 1;
 				playing = false;
@@ -78,10 +81,67 @@
 		userPaused = true;
 		progress = +(e.target as HTMLInputElement).value;
 	}
+	function jumpTo(start: number) {
+		userPaused = false;
+		progress = start + 0.001;
+		playing = true;
+		last = null;
+	}
+	function apply(raw: string) {
+		const err = validateEinsum(raw);
+		if (err) {
+			error = err;
+			return;
+		}
+		error = '';
+		expr = raw.replace(/\s+/g, '');
+		draft = expr;
+		restart();
+	}
+	function onDraftKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') apply(draft);
+	}
+	function onPreset(e: Event) {
+		const sel = e.currentTarget as HTMLSelectElement;
+		if (sel.value) apply(sel.value);
+		sel.value = '';
+	}
 </script>
 
 <div class="viz" bind:this={container}>
-	<div class="stage">
+	{#if interactive}
+		<div class="inputrow">
+			<input
+				class="field"
+				bind:value={draft}
+				spellcheck="false"
+				aria-label="einsum expression"
+				on:keydown={onDraftKeydown}
+			/>
+			<button class="go" on:click={() => apply(draft)}>go</button>
+			<select class="preset" on:change={onPreset} aria-label="preset einsums">
+				<option value="">presets…</option>
+				{#each PRESETS as p}
+					<option value={p.expr}>{p.label} — {p.expr}</option>
+				{/each}
+			</select>
+		</div>
+		{#if error}
+			<div class="error">{error}</div>
+		{/if}
+	{/if}
+	<div class="expr" aria-hidden="true">
+		{#each model.spec.a as l}<span style={`color:${model.colors.get(l)}`}>{l}</span>{/each}<span
+			class="dim">,</span
+		>{#each model.spec.b as l}<span style={`color:${model.colors.get(l)}`}>{l}</span>{/each}<span
+			class="dim"
+		>
+			&rarr;
+		</span>{#if model.spec.out.length}{#each model.spec.out as l}<span
+				style={`color:${model.colors.get(l)}`}>{l}</span
+			>{/each}{:else}<span class="dim scalar">scalar</span>{/if}
+	</div>
+	<div>
 		<svg
 			class="main"
 			viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
@@ -102,6 +162,9 @@
 						<path d="M0,0 L6,3 L0,6 Z" fill={color} />
 					</marker>
 				{/each}
+				<clipPath id={`lens-${uid}`}>
+					<circle cx={LENS.x} cy={LENS.y} r={LENS.r} />
+				</clipPath>
 			</defs>
 
 			{#each scene.axes as ax (ax.key)}
@@ -152,27 +215,48 @@
 					opacity={scene.highlight.opacity}
 				/>
 			{/if}
+			{#each scene.connectors as c (c.key)}
+				<line
+					x1={c.x1}
+					y1={c.y1}
+					x2={c.x2}
+					y2={c.y2}
+					stroke={c.color}
+					stroke-width="1"
+					stroke-dasharray="4 4"
+					opacity={c.opacity}
+				/>
+			{/each}
 
 			{#each scene.dots as d (d.key)}
 				<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
 			{/each}
-		</svg>
 
-		<svg
-			class="mag"
-			viewBox={`0 0 ${MAG.w} ${MAG.h}`}
-			preserveAspectRatio="xMidYMid meet"
-			role="img"
-			aria-label="dot product detail"
-		>
-			<defs>
-				<clipPath id={`lens-${uid}`}>
-					<circle cx={MAG.w / 2} cy="95" r="72" />
-				</clipPath>
-			</defs>
 			{#if scene.mag.active}
-				<circle cx={MAG.w / 2} cy="95" r="72" fill="rgb(247, 247, 248)" />
+				<circle cx={LENS.x} cy={LENS.y} r={LENS.r} fill="rgb(247, 247, 248)" />
 				<g clip-path={`url(#lens-${uid})`}>
+					{#each scene.mag.axes as ax (ax.key)}
+						<line
+							x1={ax.x1}
+							y1={ax.y1}
+							x2={ax.x2}
+							y2={ax.y2}
+							stroke={ax.color}
+							stroke-width="2"
+							stroke-linecap="round"
+							opacity={ax.opacity}
+						/>
+						<text
+							x={ax.lx}
+							y={ax.ly}
+							fill={ax.color}
+							opacity={ax.opacity}
+							font-size="10"
+							font-style="italic"
+							text-anchor="middle"
+							dominant-baseline="middle">{ax.letter}</text
+						>
+					{/each}
 					{#each scene.mag.aDots as d (d.key)}
 						<circle cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
 					{/each}
@@ -191,19 +275,29 @@
 							opacity={scene.mag.sumDot.opacity}
 						/>
 					{/if}
+					{#if scene.mag.glyph}
+						<text
+							x={LENS.x}
+							y={LENS.y + 52}
+							fill="#9aa0a8"
+							font-size="14"
+							text-anchor="middle"
+							dominant-baseline="middle">{scene.mag.glyph}</text
+						>
+					{/if}
 				</g>
 				<circle
-					cx={MAG.w / 2}
-					cy="95"
-					r="72"
+					cx={LENS.x}
+					cy={LENS.y}
+					r={LENS.r}
 					fill="none"
 					stroke="#403e43"
 					stroke-width="1.5"
 					opacity="0.5"
 				/>
 				<text
-					x={MAG.w / 2}
-					y="188"
+					x={LENS.x}
+					y={LENS.y + LENS.r + 21}
 					fill="#403e43"
 					font-size="12"
 					font-style="italic"
@@ -245,6 +339,17 @@
 			aria-label="Timeline"
 		/>
 	</div>
+	{#if interactive}
+		<div class="chips">
+			{#each model.phases as p (p.key)}
+				<button
+					class="chip"
+					class:active={scene.phase === p.key}
+					on:click={() => jumpTo(p.start)}>{p.label}</button
+				>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -252,20 +357,24 @@
 		margin: 24px 0;
 		padding: 14px 0;
 	}
-	.stage {
-		display: flex;
-		align-items: stretch;
-		gap: 8px;
-	}
 	.main {
-		flex: 1 1 auto;
-		min-width: 0;
-		height: 280px;
+		display: block;
+		width: 100%;
+		height: auto;
 	}
-	.mag {
-		flex: 0 0 140px;
-		width: 140px;
-		height: 280px;
+	.expr {
+		text-align: center;
+		font-family: 'Inconsolata', monospace;
+		font-size: 15px;
+		letter-spacing: 0.5px;
+		margin-bottom: 2px;
+	}
+	.expr .dim {
+		color: rgb(165, 163, 168);
+	}
+	.expr .scalar {
+		font-style: italic;
+		font-size: 13px;
 	}
 	.caption {
 		margin-top: 8px;
@@ -299,17 +408,71 @@
 		flex: 1;
 		accent-color: rgb(99, 102, 241);
 	}
-	@media (max-width: 520px) {
-		.stage {
-			flex-direction: column;
-		}
-		.mag {
-			flex: 0 0 170px;
-			width: 100%;
-			height: 170px;
-		}
-		.main {
-			height: 240px;
-		}
+	.inputrow {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 10px;
+	}
+	.field {
+		width: 130px;
+		padding: 4px 8px;
+		font-family: 'Inconsolata', monospace;
+		font-size: 14px;
+		border: 1px solid rgb(210, 208, 213);
+		border-radius: 6px;
+		background: rgb(250, 250, 251);
+		color: inherit;
+	}
+	.field:focus {
+		outline: none;
+		border-color: rgb(150, 148, 153);
+	}
+	.go {
+		padding: 4px 10px;
+		font-size: 13px;
+		border: 1px solid rgb(210, 208, 213);
+		border-radius: 6px;
+		background: rgb(248, 248, 249);
+		color: rgb(80, 78, 83);
+		cursor: pointer;
+	}
+	.go:hover {
+		border-color: rgb(150, 148, 153);
+	}
+	.preset {
+		padding: 4px 6px;
+		font-size: 13px;
+		border: 1px solid rgb(210, 208, 213);
+		border-radius: 6px;
+		background: rgb(248, 248, 249);
+		color: rgb(80, 78, 83);
+	}
+	.error {
+		margin: -4px 0 8px;
+		font-size: 13px;
+		color: rgb(180, 69, 46);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 8px;
+	}
+	.chip {
+		padding: 2px 9px;
+		font-size: 12px;
+		border: none;
+		border-radius: 999px;
+		background: rgb(238, 238, 240);
+		color: rgb(100, 98, 103);
+		cursor: pointer;
+	}
+	.chip:hover {
+		background: rgb(226, 226, 230);
+	}
+	.chip.active {
+		background: rgb(64, 62, 67);
+		color: white;
 	}
 </style>
