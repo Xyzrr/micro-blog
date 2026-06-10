@@ -8,15 +8,20 @@
 <h1>Visualizing tensor contractions</h1>
 <div class="opacity-60 mb-8">June 2026</div>
 <p>
-	I tend to think in animations. It's served me well for most of math and physics, but when I started
-	writing PyTorch code, I noticed myself struggling to visualize things.
+	They say that at some point in your mathematical maturity, you need to stop relying entirely on visualizations and start thinking symbolically.
+	I never figured out how to do that, so here we are.
 </p>
 <p>
-	I realized there was one particular visualization holding me back. Since high school, I've had <a href="http://matrixmultiplication.xyz/" target="_blank">this
+	Thinking in animations became a real liability when I started writing PyTorch code. I probably should have tried harder to switch to symbols,
+	but ML code sits right at the edge of visualizability: the tensors are low-rank enough that you <em>could</em> picture everything — it's just hard.
+</p>
+<p>
+	So instead I thought about how I could improve my visuals, and I realized that one particular animation ingrained deep in my brain was holding me back. 
+	Since high school, I've had <a href="http://matrixmultiplication.xyz/" target="_blank">this
 	visual</a> of matrix multiplication in my head, with one matrix rotating and sliding through the
 	other. I gravitated towards it because it felt like it let me reuse my physical intuition for rotating
 	and moving objects. I now realize this has been net harmful; it's made visualizing matmuls more mentally taxing than it needs to be, and it suggests physical metaphors that don't really
-	apply.
+	apply, which I'll get into later.
 </p>
 <p>
 	I now have a new animation in my head for matrix multiplication, and I thought it might be helpful
